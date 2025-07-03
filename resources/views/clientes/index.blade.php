@@ -1,248 +1,25 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clientes - Farmacia Magistral</title>
-    
-    <!-- Bootstrap 5.3 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --success-gradient: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
-            --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-            --sidebar-gradient: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
-        }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-        }
-        
-        .modern-sidebar {
-            background: var(--sidebar-gradient);
-            min-height: 100vh;
-            box-shadow: 5px 0 20px rgba(0,0,0,0.1);
-        }
-        
-        .sidebar-brand {
-            padding: 2rem 1.5rem;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            text-align: center;
-        }
-        
-        .sidebar-brand h3 {
-            color: white;
-            font-weight: 700;
-            margin: 0;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .nav-link {
-            color: rgba(255,255,255,0.85) !important;
-            padding: 1rem 1.5rem;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            margin: 0.2rem 1rem;
-            font-weight: 500;
-        }
-        
-        .nav-link:hover {
-            background: rgba(255,255,255,0.1);
-            color: white !important;
-            transform: translateX(5px);
-        }
-        
-        .nav-link.active {
-            background: rgba(255,255,255,0.2);
-            color: white !important;
-            box-shadow: 0 4px 15px rgba(255,255,255,0.2);
-        }
-        
-        .main-content {
-            background: white;
-            border-radius: 25px 0 0 0;
-            min-height: 100vh;
-            padding: 2rem;
-            box-shadow: -5px 0 20px rgba(0,0,0,0.1);
-        }
-        
-        .page-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 20px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-        }
-        
-        .page-title {
-            font-size: 3rem;
-            font-weight: 700;
-            margin: 0;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .stat-card {
-            background: white;
-            border-radius: 20px;
-            padding: 2rem;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255,255,255,0.2);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-        }
-        
-        .stat-card.primary::before { background: var(--primary-gradient); }
-        .stat-card.success::before { background: var(--success-gradient); }
-        .stat-card.warning::before { background: var(--warning-gradient); }
-        .stat-card.info::before { background: var(--info-gradient); }
-        
-        .stat-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-        }
-        
-        .btn-modern {
-            border-radius: 12px;
-            font-weight: 600;
-            padding: 0.75rem 2rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            transition: all 0.3s ease;
-            border: none;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .btn-modern::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
-        }
-        
-        .btn-modern:hover::before {
-            left: 100%;
-        }
-        
-        .btn-primary-modern { background: var(--primary-gradient); color: white; }
-        .btn-success-modern { background: var(--success-gradient); color: white; }
-        .btn-warning-modern { background: var(--warning-gradient); color: white; }
-        .btn-info-modern { background: var(--info-gradient); color: white; }
-        .btn-danger-modern { background: var(--danger-gradient); color: white; }
-        
-        .modern-table {
-            background: white;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        
-        .modern-table .table thead th {
-            background: var(--primary-gradient);
-            color: white;
-            border: none;
-            font-weight: 600;
-            padding: 1.5rem 1rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-size: 0.9rem;
-        }
-        
-        .modern-table .table tbody td {
-            padding: 1.25rem 1rem;
-            border-bottom: 1px solid #f8f9fa;
-            vertical-align: middle;
-        }
-        
-        .modern-table .table tbody tr:hover {
-            background: #f8f9fa;
-        }
-        
-        .modern-card {
-            background: white;
-            border-radius: 20px;
-            padding: 2rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            transition: all 0.3s ease;
-        }
-        
-        .modern-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-        }
-        
-        .badge-modern {
-            border-radius: 20px;
-            padding: 0.5rem 1rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-size: 0.75rem;
-        }
-        
-        .fade-in {
-            animation: fadeIn 0.8s ease-in;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+@extends('layouts.modern')
 
-        .modal-content {
-            border-radius: 20px;
-            border: none;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-        }
+@section('title', 'Gestión de Clientes - PharmaSys Pro')
 
-        .modal-header {
-            background: var(--primary-gradient);
-            color: white;
-            border-radius: 20px 20px 0 0;
-            border: none;
-        }
+@section('page_title')
+<div class="d-flex justify-content-between align-items-center">
+    <div>
+        <h2 class="text-white fw-bold mb-1">
+            <i class="bi bi-people me-3"></i>Gestión de Clientes
+        </h2>
+        <p class="text-white-50 mb-0">Administrar clientes y sus datos de contacto</p>
+    </div>
+    <div>
+        <button class="btn btn-light btn-lg" onclick="exportarClientes()">
+            <i class="bi bi-download me-1"></i> Exportar
+        </button>
+    </div>
+</div>
+@endsection
 
-        .form-control, .form-select {
-            border-radius: 12px;
-            border: 2px solid #e9ecef;
-            padding: 0.75rem 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        }
-
+@push('styles')
+<style>
         .no-data-state {
             text-align: center;
             padding: 4rem 2rem;
@@ -254,291 +31,212 @@
             opacity: 0.3;
             margin-bottom: 2rem;
         }
-    </style>
-</head>
-<body>
-    <div class="container-fluid p-0">
-        <div class="row g-0">
-            <!-- Sidebar -->
-            <nav class="col-md-3 col-lg-2 modern-sidebar">
-                <div class="sidebar-brand">
-                    <h3><i class="bi bi-hospital"></i> Farmacia</h3>
-                    <small>{{ auth()->user()->name ?? 'Usuario' }}</small>
-                    <small class="d-block">{{ auth()->user()->role ?? 'Empleado' }}</small>
-                </div>
-                
-                <ul class="nav flex-column mt-3">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/dashboard">
-                            <i class="bi bi-speedometer2 me-2"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/productos">
-                            <i class="bi bi-capsule me-2"></i> Productos
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/ventas">
-                            <i class="bi bi-cart-check me-2"></i> Ventas
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="/clientes">
-                            <i class="bi bi-people me-2"></i> Clientes
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/marcas">
-                            <i class="bi bi-tags me-2"></i> Marcas
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/categorias">
-                            <i class="bi bi-grid me-2"></i> Categorías
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/proveedores">
-                            <i class="bi bi-truck me-2"></i> Proveedores
-                        </a>
-                    </li>
-                    @if(auth()->user()->role === 'administrador')
-                    <li class="nav-item">
-                        <a class="nav-link" href="/usuarios">
-                            <i class="bi bi-person-gear me-2"></i> Usuarios
-                        </a>
-                    </li>
-                    @endif
-                    
-                    <!-- Separador para cerrar sesión -->
-                    <li class="nav-item mt-4" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
-                        <form action="{{ route('logout') }}" method="POST" id="logout-form-clientes" style="display: none;">
-                            @csrf
-                        </form>
-                        <a class="nav-link" href="#" onclick="mostrarModalCerrarSesion()" style="background: rgba(255,107,107,0.2); border: 1px solid rgba(255,107,107,0.3); color: white !important;">
-                            <i class="bi bi-box-arrow-right me-2"></i> Cerrar Sesión
-                        </a>
-                    </li>
-                </ul>
-            </nav>
+</style>
+@endpush
 
-            <!-- Contenido Principal -->
-            <main class="col-md-9 col-lg-10 main-content">
-                <div class="fade-in">
-                    <!-- Header -->
-                    <div class="page-header">
-                        <h1 class="page-title">
-                            <i class="bi bi-people me-3"></i>Clientes
-                        </h1>
-                        <p class="mb-0 opacity-75" style="font-size: 1.2rem;">Gestión de clientes y directorio</p>
-                    </div>
+@section('content')
+@php
+    try {
+        $clientes = \App\Models\Cliente::orderBy('nombres')->get();
+        $totalClientes = $clientes->count();
+        $clientesActivos = $clientes->where('activo', true)->count();
+        $clientesConCompras = \App\Models\Cliente::has('ventas')->count();
+        $clientesVip = $clientes->take(5);
+    } catch(\Exception $e) {
+        $clientes = collect([
+            (object)['id' => 1, 'nombres' => 'Juan Carlos', 'apellidos' => 'Pérez García', 'dni' => '12345678', 'telefono' => '987654321', 'email' => 'juan@email.com', 'activo' => true],
+            (object)['id' => 2, 'nombres' => 'María', 'apellidos' => 'López Torres', 'dni' => '87654321', 'telefono' => '123456789', 'email' => null, 'activo' => true],
+            (object)['id' => 3, 'nombres' => 'Cliente', 'apellidos' => 'General', 'dni' => null, 'telefono' => null, 'email' => null, 'activo' => true]
+        ]);
+        $totalClientes = 3;
+        $clientesActivos = 3;
+        $clientesConCompras = 1;
+        $clientesVip = $clientes->take(3);
+    }
+@endphp
 
-                    @php
-                        try {
-                            $clientes = \App\Models\Cliente::orderBy('nombres')->get();
-                            $totalClientes = $clientes->count();
-                            $clientesActivos = $clientes->where('activo', true)->count();
-                            $clientesConCompras = \App\Models\Cliente::has('ventas')->count();
-                            $clientesVip = $clientes->take(5);
-                        } catch(\Exception $e) {
-                            $clientes = collect([
-                                (object)['id' => 1, 'nombres' => 'Juan Carlos', 'apellidos' => 'Pérez García', 'dni' => '12345678', 'telefono' => '987654321', 'email' => 'juan@email.com', 'activo' => true],
-                                (object)['id' => 2, 'nombres' => 'María', 'apellidos' => 'López Torres', 'dni' => '87654321', 'telefono' => '123456789', 'email' => null, 'activo' => true],
-                                (object)['id' => 3, 'nombres' => 'Cliente', 'apellidos' => 'General', 'dni' => null, 'telefono' => null, 'email' => null, 'activo' => true]
-                            ]);
-                            $totalClientes = 3;
-                            $clientesActivos = 3;
-                            $clientesConCompras = 1;
-                            $clientesVip = $clientes->take(3);
-                        }
-                    @endphp
-
-                    <!-- Estadísticas de Clientes -->
-                    <div class="row mb-4">
-                        <div class="col-lg-3 col-md-6 mb-4">
-                            <div class="stat-card primary">
-                                <div class="text-primary" style="font-size: 3rem; margin-bottom: 1rem;">
-                                    <i class="bi bi-people"></i>
-                                </div>
-                                <div class="text-primary" style="font-size: 3rem; font-weight: 700; margin: 1rem 0;">{{ $totalClientes }}</div>
-                                <div style="color: #6c757d; font-size: 1.1rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Total Clientes</div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-lg-3 col-md-6 mb-4">
-                            <div class="stat-card success">
-                                <div class="text-success" style="font-size: 3rem; margin-bottom: 1rem;">
-                                    <i class="bi bi-check-circle"></i>
-                                </div>
-                                <div class="text-success" style="font-size: 3rem; font-weight: 700; margin: 1rem 0;">{{ $clientesActivos }}</div>
-                                <div style="color: #6c757d; font-size: 1.1rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Activos</div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-lg-3 col-md-6 mb-4">
-                            <div class="stat-card info">
-                                <div class="text-info" style="font-size: 3rem; margin-bottom: 1rem;">
-                                    <i class="bi bi-cart-check"></i>
-                                </div>
-                                <div class="text-info" style="font-size: 3rem; font-weight: 700; margin: 1rem 0;">{{ $clientesConCompras }}</div>
-                                <div style="color: #6c757d; font-size: 1.1rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Con Compras</div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-lg-3 col-md-6 mb-4">
-                            <div class="stat-card warning">
-                                <div class="text-warning" style="font-size: 3rem; margin-bottom: 1rem;">
-                                    <i class="bi bi-star"></i>
-                                </div>
-                                <div class="text-warning" style="font-size: 3rem; font-weight: 700; margin: 1rem 0;">{{ $clientesVip->count() }}</div>
-                                <div style="color: #6c757d; font-size: 1.1rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Clientes VIP</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Acciones y Controles -->
-                    <div class="row mb-4">
-                        <div class="col-md-8">
-                            <div class="modern-card">
-                                <h5 class="mb-3">
-                                    <i class="bi bi-search text-primary me-2"></i>
-                                    Búsqueda y Filtros
-                                </h5>
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <input type="text" class="form-control" placeholder="Buscar por nombre, DNI o teléfono..." id="searchInput" style="border-radius: 12px; padding: 0.75rem;">
-                                    </div>
-                                    <div class="col-md-3 mb-3">
-                                        <select class="form-select" id="estadoFilter" style="border-radius: 12px; padding: 0.75rem;">
-                                            <option value="">Todos los estados</option>
-                                            <option value="activo">Activos</option>
-                                            <option value="inactivo">Inactivos</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3 mb-3">
-                                        <button class="btn btn-info-modern btn-modern w-100" onclick="limpiarFiltros()">
-                                            <i class="bi bi-arrow-clockwise me-1"></i> Limpiar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="modern-card" style="height: 100%;">
-                                <h6 class="mb-3">
-                                    <i class="bi bi-lightning text-warning me-2"></i>
-                                    Acciones Rápidas
-                                </h6>
-                                <div class="d-grid gap-2">
-                                    @if(auth()->user()->role === 'administrador')
-                                    <button class="btn btn-success-modern btn-modern btn-sm" data-bs-toggle="modal" data-bs-target="#nuevoClienteModal">
-                                        <i class="bi bi-person-plus me-1"></i> Nuevo Cliente
-                                    </button>
-                                    @endif
-                                    <button class="btn btn-primary-modern btn-modern btn-sm" onclick="exportarClientes()">
-                                        <i class="bi bi-download me-1"></i> Exportar Lista
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Tabla de Clientes -->
-                    @if($totalClientes > 0)
-                    <div class="modern-table">
-                        <table class="table mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Cliente</th>
-                                    <th>DNI</th>
-                                    <th>Contacto</th>
-                                    <th>Estado</th>
-                                    <th>Compras</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($clientes as $cliente)
-                                <tr>
-                                    <td>
-                                        <div>
-                                            <strong>{{ $cliente->nombres ?? 'Sin nombre' }}</strong>
-                                            @if($cliente->apellidos)
-                                            <br><small class="text-muted">{{ $cliente->apellidos }}</small>
-                                            @endif
-                                        </div>
-                                    </td>
-                                    <td>
-                                        @if($cliente->documento)
-                                            <span class="badge bg-secondary badge-modern">{{ $cliente->tipo_documento ?? 'DOC' }}: {{ $cliente->documento }}</span>
-                                        @else
-                                            <span class="text-muted">Sin documento</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <div>
-                                            @if($cliente->telefono)
-                                                <i class="bi bi-telephone me-1"></i>{{ $cliente->telefono }}<br>
-                                            @endif
-                                            @if($cliente->email)
-                                                <small class="text-muted"><i class="bi bi-envelope me-1"></i>{{ $cliente->email }}</small>
-                                            @endif
-                                            @if(!$cliente->telefono && !$cliente->email)
-                                                <span class="text-muted">Sin contacto</span>
-                                            @endif
-                                        </div>
-                                    </td>
-                                    <td>
-                                        @if($cliente->activo)
-                                            <span class="badge bg-success badge-modern">Activo</span>
-                                        @else
-                                            <span class="badge bg-danger badge-modern">Inactivo</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-info badge-modern">0 compras</span>
-                                    </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <button type="button" class="btn btn-outline-primary btn-sm" title="Ver detalles" onclick="verCliente({{ $cliente->id }}, '{{ $cliente->nombres }}', '{{ $cliente->apellidos }}', '{{ $cliente->documento }}', '{{ $cliente->tipo_documento }}', '{{ $cliente->telefono }}', '{{ $cliente->email }}', '{{ $cliente->direccion }}', {{ $cliente->activo ? 'true' : 'false' }})">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
-                                            @if(auth()->user()->role === 'administrador')
-                                            <button type="button" class="btn btn-outline-warning btn-sm" title="Editar" onclick="editarCliente({{ $cliente->id }}, '{{ $cliente->nombres }}', '{{ $cliente->apellidos }}', '{{ $cliente->documento }}', '{{ $cliente->tipo_documento }}', '{{ $cliente->telefono }}', '{{ $cliente->email }}', '{{ $cliente->direccion }}', {{ $cliente->activo ? 'true' : 'false' }})">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-outline-danger btn-sm" title="Eliminar" onclick="eliminarCliente({{ $cliente->id }}, '{{ $cliente->nombres }} {{ $cliente->apellidos }}')">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                            @endif
-                                        </div>
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                    @else
-                    <!-- Estado sin clientes -->
-                    <div class="modern-card">
-                        <div class="no-data-state">
-                            <i class="bi bi-people"></i>
-                            <h4>No hay clientes registrados</h4>
-                            <p class="mb-4">Comienza agregando tu primer cliente</p>
-                            @if(auth()->user()->role === 'administrador')
-                            <button class="btn btn-success-modern btn-modern btn-lg" data-bs-toggle="modal" data-bs-target="#nuevoClienteModal">
-                                <i class="bi bi-person-plus me-2"></i>
-                                Agregar Primer Cliente
-                            </button>
-                            @endif
-                        </div>
-                    </div>
-                    @endif
-                </div>
-            </main>
+<!-- Estadísticas de Clientes -->
+<div class="row mb-4 g-4">
+    <div class="col-xxl-3 col-xl-3 col-lg-6 col-md-6 mb-3">
+        <div class="stat-card primary h-100">
+            <div class="text-primary" style="font-size: 3rem; margin-bottom: 1rem;">
+                <i class="bi bi-people"></i>
+            </div>
+            <div class="text-primary" style="font-size: 3rem; font-weight: 700; margin: 1rem 0;">{{ $totalClientes }}</div>
+            <div style="color: #6c757d; font-size: 1.1rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Total Clientes</div>
         </div>
     </div>
+    
+    <div class="col-xxl-3 col-xl-3 col-lg-6 col-md-6 mb-3">
+        <div class="stat-card success h-100">
+            <div class="text-success" style="font-size: 3rem; margin-bottom: 1rem;">
+                <i class="bi bi-check-circle"></i>
+            </div>
+            <div class="text-success" style="font-size: 3rem; font-weight: 700; margin: 1rem 0;">{{ $clientesActivos }}</div>
+            <div style="color: #6c757d; font-size: 1.1rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Activos</div>
+        </div>
+    </div>
+    
+    <div class="col-xxl-3 col-xl-3 col-lg-6 col-md-6 mb-3">
+        <div class="stat-card info h-100">
+            <div class="text-info" style="font-size: 3rem; margin-bottom: 1rem;">
+                <i class="bi bi-cart-check"></i>
+            </div>
+            <div class="text-info" style="font-size: 3rem; font-weight: 700; margin: 1rem 0;">{{ $clientesConCompras }}</div>
+            <div style="color: #6c757d; font-size: 1.1rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Con Compras</div>
+        </div>
+    </div>
+    
+    <div class="col-xxl-3 col-xl-3 col-lg-6 col-md-6 mb-3">
+        <div class="stat-card warning h-100">
+            <div class="text-warning" style="font-size: 3rem; margin-bottom: 1rem;">
+                <i class="bi bi-star"></i>
+            </div>
+            <div class="text-warning" style="font-size: 3rem; font-weight: 700; margin: 1rem 0;">{{ $clientesVip->count() }}</div>
+            <div style="color: #6c757d; font-size: 1.1rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Clientes VIP</div>
+        </div>
+    </div>
+</div>
+
+<!-- Acciones y Controles -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="modern-card">
+            <h5 class="mb-3">
+                <i class="bi bi-search text-primary me-2"></i>
+                Búsqueda y Filtros
+            </h5>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <input type="text" class="form-control" placeholder="Buscar por nombre, DNI o teléfono..." id="searchInput" style="border-radius: 12px; padding: 0.75rem;">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <select class="form-select" id="estadoFilter" style="border-radius: 12px; padding: 0.75rem;">
+                        <option value="">Todos los estados</option>
+                        <option value="activo">Activos</option>
+                        <option value="inactivo">Inactivos</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <button class="btn btn-info-modern btn-modern w-100" onclick="limpiarFiltros()">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Limpiar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="modern-card" style="height: 100%;">
+            <h6 class="mb-3">
+                <i class="bi bi-lightning text-warning me-2"></i>
+                Acciones Rápidas
+            </h6>
+            <div class="d-grid gap-2">
+                @if(auth()->user()->role === 'administrador')
+                <button class="btn btn-success-modern btn-modern btn-sm" data-bs-toggle="modal" data-bs-target="#nuevoClienteModal">
+                    <i class="bi bi-person-plus me-1"></i> Nuevo Cliente
+                </button>
+                @endif
+                <button class="btn btn-primary-modern btn-modern btn-sm" onclick="exportarClientes()">
+                    <i class="bi bi-download me-1"></i> Exportar Lista
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de Clientes -->
+@if($totalClientes > 0)
+<div class="modern-table">
+    <table class="table mb-0">
+        <thead>
+            <tr>
+                <th>Cliente</th>
+                <th>DNI</th>
+                <th>Contacto</th>
+                <th>Estado</th>
+                <th>Compras</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($clientes as $cliente)
+            <tr>
+                <td>
+                    <div>
+                        <strong>{{ $cliente->nombres ?? 'Sin nombre' }}</strong>
+                        @if($cliente->apellidos)
+                        <br><small class="text-muted">{{ $cliente->apellidos }}</small>
+                        @endif
+                    </div>
+                </td>
+                <td>
+                    @if($cliente->documento)
+                        <span class="badge bg-secondary badge-modern">{{ $cliente->tipo_documento ?? 'DOC' }}: {{ $cliente->documento }}</span>
+                    @else
+                        <span class="text-muted">Sin documento</span>
+                    @endif
+                </td>
+                <td>
+                    <div>
+                        @if($cliente->telefono)
+                            <i class="bi bi-telephone me-1"></i>{{ $cliente->telefono }}<br>
+                        @endif
+                        @if($cliente->email)
+                            <small class="text-muted"><i class="bi bi-envelope me-1"></i>{{ $cliente->email }}</small>
+                        @endif
+                        @if(!$cliente->telefono && !$cliente->email)
+                            <span class="text-muted">Sin contacto</span>
+                        @endif
+                    </div>
+                </td>
+                <td>
+                    @if($cliente->activo)
+                        <span class="badge bg-success badge-modern">Activo</span>
+                    @else
+                        <span class="badge bg-danger badge-modern">Inactivo</span>
+                    @endif
+                </td>
+                <td>
+                    <span class="badge bg-info badge-modern">0 compras</span>
+                </td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-primary btn-sm" title="Ver detalles" onclick="verCliente({{ $cliente->id }}, '{{ $cliente->nombres }}', '{{ $cliente->apellidos }}', '{{ $cliente->documento }}', '{{ $cliente->tipo_documento }}', '{{ $cliente->telefono }}', '{{ $cliente->email }}', '{{ $cliente->direccion }}', {{ $cliente->activo ? 'true' : 'false' }})">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        @if(auth()->user()->role === 'administrador')
+                        <button type="button" class="btn btn-outline-warning btn-sm" title="Editar" onclick="editarCliente({{ $cliente->id }}, '{{ $cliente->nombres }}', '{{ $cliente->apellidos }}', '{{ $cliente->documento }}', '{{ $cliente->tipo_documento }}', '{{ $cliente->telefono }}', '{{ $cliente->email }}', '{{ $cliente->direccion }}', {{ $cliente->activo ? 'true' : 'false' }})">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm" title="Eliminar" onclick="eliminarCliente({{ $cliente->id }}, '{{ $cliente->nombres }} {{ $cliente->apellidos }}')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                        @endif
+                    </div>
+                </td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+</div>
+@else
+<!-- Estado sin clientes -->
+<div class="modern-card">
+    <div class="no-data-state">
+        <i class="bi bi-people"></i>
+        <h4>No hay clientes registrados</h4>
+        <p class="mb-4">Comienza agregando tu primer cliente</p>
+        @if(auth()->user()->role === 'administrador')
+        <button class="btn btn-success-modern btn-modern btn-lg" data-bs-toggle="modal" data-bs-target="#nuevoClienteModal">
+            <i class="bi bi-person-plus me-2"></i>
+            Agregar Primer Cliente
+        </button>
+        @endif
+    </div>
+</div>
+@endif
+@endsection
 
     <!-- Modal Nuevo Cliente -->
     <div class="modal fade" id="nuevoClienteModal" tabindex="-1">

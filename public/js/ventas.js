@@ -379,6 +379,30 @@ function ejecutarCerrarSesion() {
     document.getElementById('logout-form-ventas').submit();
 }
 
+// FUNCIÓN GLOBAL PARA NUEVA VENTA
+window.nuevaVenta = function() {
+    // Si estamos en la vista de ventas, usar la función específica
+    if (typeof abrirNuevaVenta === 'function') {
+        abrirNuevaVenta();
+        return;
+    }
+    
+    // Función básica para otras vistas
+    var modal = document.getElementById('nuevaVentaModal');
+    if (modal) {
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            var modalInstance = bootstrap.Modal.getOrCreateInstance(modal);
+            modalInstance.show();
+        } else {
+            // Fallback si no hay Bootstrap Modal
+            modal.style.display = 'block';
+        }
+    } else {
+        // Redirigir a la vista de ventas si no hay modal
+        window.location.href = '/ventas';
+    }
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Sistema POS cargado correctamente - SIN ERRORES');
     var modal = document.getElementById('nuevaVentaModal');
@@ -412,4 +436,359 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('- buscarProductoEnter:', typeof buscarProductoEnter);
     console.log('- buscarProductoTiempoReal:', typeof buscarProductoTiempoReal);
     console.log('Todas las funciones estan disponibles');
+});
+
+// VER TICKET
+window.verTicket = async function(id) {
+    try {
+        const response = await fetch(`/ventas/${id}/ticket`);
+        const html = await response.text();
+        document.getElementById('verTicketBody').innerHTML = html;
+        const modal = new bootstrap.Modal(document.getElementById('verTicketModal'));
+        modal.show();
+    } catch (error) {
+        mostrarMensaje('error', 'Error al cargar el ticket');
+    }
+};
+
+// --- INICIALIZACIÓN DE EDICIÓN DE VENTA (MODAL) ---
+window.inicializarEdicionVenta = function() {
+    setTimeout(function() {
+        console.log('Inicializando edición de venta...');
+        const productoSelect = document.getElementById('producto_id_editar');
+        const loteInput = document.getElementById('lote_editar');
+        const fechaVencInput = document.getElementById('fecha_vencimiento_editar');
+        const precioInput = document.getElementById('precio_unitario_editar');
+        const cantidadInput = document.getElementById('cantidad_editar');
+        const agregarBtn = document.getElementById('agregarProductoEditarBtn');
+        console.log({ productoSelect, loteInput, fechaVencInput, precioInput, cantidadInput, agregarBtn });
+        if (!productoSelect || !loteInput || !fechaVencInput || !precioInput || !cantidadInput || !agregarBtn) {
+            console.warn('Algún elemento no existe en el DOM del modal de edición');
+            return;
+        }
+        if (typeof renderTablaEditar === 'function') renderTablaEditar();
+        productoSelect.onchange = function() {
+            const selected = this.options[this.selectedIndex];
+            loteInput.value = selected.getAttribute('data-lote') || '';
+            fechaVencInput.value = selected.getAttribute('data-fecha_vencimiento') || '';
+            precioInput.value = selected.getAttribute('data-precio') || '';
+        };
+        agregarBtn.onclick = function() {
+            const producto_id = productoSelect.value;
+            const producto_nombre = productoSelect.options[productoSelect.selectedIndex]?.text || '';
+            const lote = loteInput.value;
+            const fecha_vencimiento = fechaVencInput.value;
+            const precio_unitario = precioInput.value;
+            const cantidad = cantidadInput.value;
+            if (!producto_id || !precio_unitario || !cantidad || cantidad < 1) {
+                alert('Completa los datos del producto');
+                return;
+            }
+            if (typeof productosEditarVenta === 'undefined') window.productosEditarVenta = [];
+            productosEditarVenta.push({
+                producto_id, producto_nombre, lote, fecha_vencimiento, precio_unitario, cantidad
+            });
+            if (typeof renderTablaEditar === 'function') renderTablaEditar();
+            productoSelect.value = '';
+            loteInput.value = '';
+            fechaVencInput.value = '';
+            precioInput.value = '';
+            cantidadInput.value = '';
+        };
+    }, 150);
+};
+
+// --- MODIFICAR LA FUNCIÓN QUE ABRE EL MODAL DE EDICIÓN ---
+window.editarVenta = async function(id) {
+    try {
+        const response = await fetch(`/ventas/${id}/edit`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        const html = await response.text();
+        document.getElementById('editarVentaBody').innerHTML = html;
+        const modal = new bootstrap.Modal(document.getElementById('editarVentaModal'));
+        modal.show();
+        // Inicializa los eventos y lógica de edición
+        if (window.inicializarEdicionVenta) window.inicializarEdicionVenta();
+    } catch (error) {
+        mostrarMensaje('error', 'Error al cargar la venta');
+    }
+};
+
+// ACTUALIZAR VENTA
+window.actualizarVenta = async function(event, id) {
+    event.preventDefault();
+    const form = event.target;
+    const data = {
+        tipo_pago: form.tipo_pago.value,
+        estado: form.estado.value,
+        observaciones: form.observaciones.value,
+        _token: getCSRFToken()
+    };
+    try {
+        const response = await fetch(`/ventas/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': getCSRFToken()
+            },
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        if (result.success) {
+            mostrarMensaje('success', 'Venta actualizada');
+            bootstrap.Modal.getInstance(document.getElementById('editarVentaModal')).hide();
+            recargarTablaVentas();
+        } else {
+            mostrarMensaje('error', result.message || 'Error al actualizar');
+        }
+    } catch (error) {
+        mostrarMensaje('error', 'Error al actualizar la venta');
+    }
+};
+
+// ANULAR VENTA
+window.anularVenta = async function(id, ticket) {
+    if (!confirm(`¿Está seguro de anular la venta ${ticket}? Esta acción no se puede deshacer.`)) return;
+    try {
+        const response = await fetch(`/ventas/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': getCSRFToken()
+            }
+        });
+        const result = await response.json();
+        if (result.success) {
+            mostrarMensaje('success', 'Venta anulada exitosamente');
+            recargarTablaVentas();
+        } else {
+            mostrarMensaje('error', result.message || 'Error al anular');
+        }
+    } catch (error) {
+        mostrarMensaje('error', 'Error al anular la venta');
+    }
+};
+
+// RECARGAR TABLA DE VENTAS
+window.recargarTablaVentas = async function() {
+    try {
+        const response = await fetch(window.location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        const html = await response.text();
+        // Extraer solo el tbody de la tabla de ventas
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        const newTbody = tempDiv.querySelector('table.table tbody');
+        if (newTbody) {
+            document.querySelector('table.table tbody').innerHTML = newTbody.innerHTML;
+        } else {
+            window.location.reload(); // Fallback
+        }
+    } catch (error) {
+        window.location.reload();
+    }
+};
+
+// GUARDAR NUEVA VENTA (AJAX)
+window.guardarVenta = async function(event) {
+    event.preventDefault();
+    const form = event.target;
+    const btn = form.querySelector('button[type="submit"]');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+    }
+
+    // Obtener datos del formulario
+    const cliente_id = form.cliente_id ? form.cliente_id.value : '';
+    const tipo_pago = form.tipo_pago ? form.tipo_pago.value : 'efectivo';
+    const observaciones = form.observaciones ? form.observaciones.value : '';
+
+    // Obtener productos seleccionados
+    let productos = [];
+    if (typeof productosVenta !== 'undefined' && Array.isArray(productosVenta) && productosVenta.length > 0) {
+        productos = productosVenta.map(p => ({
+            producto_id: p.id,
+            cantidad: p.cantidad,
+            precio_unitario: p.precio,
+            lote: p.lote || '',
+            fecha_vencimiento: p.fecha_vencimiento || ''
+        }));
+    } else if (typeof carritoVenta !== 'undefined' && Array.isArray(carritoVenta) && carritoVenta.length > 0) {
+        productos = carritoVenta.map(p => ({
+            producto_id: p.id,
+            cantidad: p.cantidad,
+            precio_unitario: p.precio,
+            lote: p.lote || '',
+            fecha_vencimiento: p.fecha_vencimiento || ''
+        }));
+    }
+
+    // Calcular totales
+    let subtotal = 0;
+    productos.forEach(p => { subtotal += (parseFloat(p.precio_unitario) || 0) * (parseInt(p.cantidad) || 0); });
+    const igv = subtotal * 0.18;
+    const total = subtotal + igv;
+
+    if (productos.length === 0) {
+        mostrarMensaje('warning', 'Agrega al menos un producto');
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle me-1"></i> Guardar Venta'; }
+        return;
+    }
+
+    const data = {
+        cliente_id,
+        tipo_pago,
+        observaciones,
+        productos,
+        subtotal,
+        igv,
+        total,
+        _token: getCSRFToken()
+    };
+
+    try {
+        const response = await fetch('/ventas/ajax', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': getCSRFToken()
+            },
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        if (result.success && result.venta) {
+            mostrarMensaje('success', 'Venta registrada correctamente');
+            bootstrap.Modal.getInstance(document.getElementById('nuevaVentaModal')).hide();
+            // Mostrar ticket automático
+            if (result.ticket_html) {
+                document.getElementById('verTicketBody').innerHTML = result.ticket_html;
+                const modal = new bootstrap.Modal(document.getElementById('verTicketModal'));
+                modal.show();
+            } else {
+                // Si no viene el HTML, recargar tabla y mostrar mensaje
+                recargarTablaVentas();
+            }
+            recargarTablaVentas();
+        } else {
+            mostrarMensaje('error', result.message || 'Error al registrar la venta');
+        }
+    } catch (error) {
+        mostrarMensaje('error', 'Error al guardar la venta');
+    }
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle me-1"></i> Guardar Venta'; }
+};
+
+// ABRIR MODAL DE NUEVA VENTA
+window.abrirNuevaVenta = function() {
+    cargarFormularioNuevaVenta();
+    const modal = new bootstrap.Modal(document.getElementById('nuevaVentaModal'));
+    modal.show();
+};
+
+// CARGAR FORMULARIO DE NUEVA VENTA
+function cargarFormularioNuevaVenta() {
+    const body = document.getElementById('nuevaVentaBody');
+    body.innerHTML = `
+        <form id="formNuevaVenta" onsubmit="guardarVenta(event)">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Cliente (Opcional)</label>
+                    <select class="form-select" name="cliente_id" id="cliente_id">
+                        <option value="">Cliente General</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Tipo de Pago</label>
+                    <select class="form-select" name="tipo_pago" required>
+                        <option value="efectivo">Efectivo</option>
+                        <option value="tarjeta">Tarjeta</option>
+                        <option value="transferencia">Transferencia</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Buscar Producto</label>
+                <input type="text" class="form-control" id="buscarProductoVenta" placeholder="Buscar por nombre o código" onkeyup="buscarProductosVenta(this.value)">
+            </div>
+            <div id="resultadosProductos" class="mb-3" style="display: none;">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead class="table-light">
+                            <tr><th>Producto</th><th>Stock</th><th>Precio</th><th>Acción</th></tr>
+                        </thead>
+                        <tbody id="tablaResultadosProductos"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="mb-3">
+                <h6>Productos Seleccionados</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead class="table-light">
+                            <tr><th>Producto</th><th>Cantidad</th><th>Precio</th><th>Lote</th><th>F. Venc.</th><th>Subtotal</th><th>Acción</th></tr>
+                        </thead>
+                        <tbody id="tablaProductosVenta">
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-3">
+                                    <i class="bi bi-cart-x fs-3"></i>
+                                    <p class="mt-2 mb-0">No hay productos seleccionados</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-8">
+                    <label class="form-label">Observaciones</label>
+                    <textarea class="form-control" name="observaciones" rows="2" placeholder="Observaciones adicionales..."></textarea>
+                </div>
+                <div class="col-md-4">
+                    <div class="border p-3 rounded bg-light">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal:</span>
+                            <span class="fw-bold" id="subtotalVenta">S/ 0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>IGV (18%):</span>
+                            <span class="fw-bold" id="igvVenta">S/ 0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-top pt-2">
+                            <span class="fw-bold">Total:</span>
+                            <span class="fw-bold text-success fs-5" id="totalVenta">S/ 0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i> Cancelar
+                </button>
+                <button type="submit" class="btn btn-success" id="btnGuardarVenta">
+                    <i class="bi bi-check-circle me-1"></i> Guardar Venta
+                </button>
+            </div>
+        </form>
+    `;
+    // Aquí podrías cargar clientes por AJAX si lo deseas
+}
+
+// --- Solución para cerrar el modal de ticket tras imprimir y limpiar el layout ---
+window.addEventListener('afterprint', function() {
+    // Cierra el modal de ticket si está abierto
+    const modalEl = document.getElementById('verTicketModal');
+    if (modalEl && typeof bootstrap !== 'undefined') {
+        const modal = bootstrap.Modal.getInstance(modalEl) || bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.hide();
+    }
+    // Elimina backdrop si quedara alguno
+    const backdrop = document.querySelector('.modal-backdrop');
+    if (backdrop) backdrop.remove();
+    // Quita clase modal-open del body si quedara
+    document.body.classList.remove('modal-open');
+    // Limpia el padding del body (Bootstrap lo pone para compensar el scroll)
+    document.body.style.paddingRight = '';
+    // Restaura el scroll
+    document.body.style.overflow = '';
 }); 

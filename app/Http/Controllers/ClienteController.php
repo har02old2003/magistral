@@ -425,4 +425,250 @@ class ClienteController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * 💾 CREAR CLIENTE VÍA AJAX
+     */
+    public function storeAjax(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'nombres' => [
+                    'required',
+                    'string',
+                    'min:2',
+                    'max:100',
+                    'regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/'
+                ],
+                'apellidos' => [
+                    'required',
+                    'string',
+                    'min:2',
+                    'max:100',
+                    'regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/'
+                ],
+                'documento' => [
+                    'required',
+                    'string',
+                    'unique:clientes,documento',
+                    'regex:/^[0-9]{8,11}$/'
+                ],
+                'tipo_documento' => 'required|in:DNI,CE,RUC',
+                'telefono' => [
+                    'nullable',
+                    'string',
+                    'regex:/^[0-9]{7,15}$/'
+                ],
+                'email' => [
+                    'nullable',
+                    'email',
+                    'unique:clientes,email'
+                ],
+                'direccion' => 'nullable|string|max:255',
+                'fecha_nacimiento' => 'nullable|date|before:today'
+            ], [
+                'nombres.required' => 'Los nombres son obligatorios.',
+                'nombres.regex' => 'Los nombres solo pueden contener letras y espacios.',
+                'apellidos.required' => 'Los apellidos son obligatorios.',
+                'apellidos.regex' => 'Los apellidos solo pueden contener letras y espacios.',
+                'documento.required' => 'El documento es obligatorio.',
+                'documento.unique' => 'Ya existe un cliente con este documento.',
+                'documento.regex' => 'El documento debe tener entre 8 y 11 dígitos.',
+                'tipo_documento.required' => 'El tipo de documento es obligatorio.',
+                'telefono.regex' => 'El teléfono debe tener entre 7 y 15 dígitos.',
+                'email.email' => 'El email debe tener un formato válido.',
+                'email.unique' => 'Ya existe un cliente con este email.',
+                'fecha_nacimiento.before' => 'La fecha de nacimiento debe ser anterior a hoy.'
+            ]);
+
+            // Validaciones específicas por tipo de documento
+            if ($validated['tipo_documento'] === 'DNI' && strlen($validated['documento']) !== 8) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El DNI debe tener exactamente 8 dígitos.',
+                    'errors' => ['documento' => ['El DNI debe tener exactamente 8 dígitos.']]
+                ], 422);
+            }
+            
+            if ($validated['tipo_documento'] === 'CE' && strlen($validated['documento']) !== 9) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El CE debe tener exactamente 9 dígitos.',
+                    'errors' => ['documento' => ['El CE debe tener exactamente 9 dígitos.']]
+                ], 422);
+            }
+            
+            if ($validated['tipo_documento'] === 'RUC' && strlen($validated['documento']) !== 11) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El RUC debe tener exactamente 11 dígitos.',
+                    'errors' => ['documento' => ['El RUC debe tener exactamente 11 dígitos.']]
+                ], 422);
+            }
+
+            // Limpiar datos
+            $validated['nombres'] = trim(ucwords(strtolower($validated['nombres'])));
+            $validated['apellidos'] = trim(ucwords(strtolower($validated['apellidos'])));
+            $validated['email'] = $validated['email'] ? strtolower(trim($validated['email'])) : null;
+            $validated['direccion'] = $validated['direccion'] ? trim($validated['direccion']) : null;
+            $validated['activo'] = true; // Los nuevos clientes se crean activos por defecto
+
+            $cliente = Cliente::create($validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cliente "' . $cliente->nombres . ' ' . $cliente->apellidos . '" creado exitosamente.',
+                'cliente' => [
+                    'id' => $cliente->id,
+                    'nombres' => $cliente->nombres,
+                    'apellidos' => $cliente->apellidos,
+                    'nombre_completo' => $cliente->nombres . ' ' . $cliente->apellidos,
+                    'documento' => $cliente->documento,
+                    'tipo_documento' => $cliente->tipo_documento,
+                    'telefono' => $cliente->telefono,
+                    'email' => $cliente->email,
+                    'direccion' => $cliente->direccion,
+                    'fecha_nacimiento' => $cliente->fecha_nacimiento,
+                    'activo' => $cliente->activo
+                ]
+            ], 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación.',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al crear el cliente: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * 📝 ACTUALIZAR CLIENTE VÍA AJAX
+     */
+    public function updateAjax(Request $request, Cliente $cliente)
+    {
+        try {
+            $validated = $request->validate([
+                'nombres' => [
+                    'required',
+                    'string',
+                    'min:2',
+                    'max:100',
+                    'regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/'
+                ],
+                'apellidos' => [
+                    'required',
+                    'string',
+                    'min:2',
+                    'max:100',
+                    'regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/'
+                ],
+                'documento' => [
+                    'required',
+                    'string',
+                    Rule::unique('clientes', 'documento')->ignore($cliente->id),
+                    'regex:/^[0-9]{8,11}$/'
+                ],
+                'tipo_documento' => 'required|in:DNI,CE,RUC',
+                'telefono' => [
+                    'nullable',
+                    'string',
+                    'regex:/^[0-9]{7,15}$/'
+                ],
+                'email' => [
+                    'nullable',
+                    'email',
+                    Rule::unique('clientes', 'email')->ignore($cliente->id)
+                ],
+                'direccion' => 'nullable|string|max:255',
+                'fecha_nacimiento' => 'nullable|date|before:today',
+                'activo' => 'boolean'
+            ]);
+
+            // Limpiar datos
+            $validated['nombres'] = trim(ucwords(strtolower($validated['nombres'])));
+            $validated['apellidos'] = trim(ucwords(strtolower($validated['apellidos'])));
+            $validated['email'] = $validated['email'] ? strtolower(trim($validated['email'])) : null;
+            $validated['direccion'] = $validated['direccion'] ? trim($validated['direccion']) : null;
+
+            $cliente->update($validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cliente "' . $cliente->nombres . ' ' . $cliente->apellidos . '" actualizado exitosamente.',
+                'cliente' => $cliente->fresh()
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación.',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar el cliente: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * 🔍 BUSCAR CLIENTES VÍA AJAX
+     */
+    public function buscarAjax(Request $request)
+    {
+        try {
+            $termino = trim($request->get('q', ''));
+            
+            if (empty($termino)) {
+                return response()->json([
+                    'success' => true,
+                    'clientes' => []
+                ]);
+            }
+            
+            $clientes = Cliente::where('activo', true)
+                ->where(function($query) use ($termino) {
+                    $query->where('nombres', 'like', "%{$termino}%")
+                          ->orWhere('apellidos', 'like', "%{$termino}%")
+                          ->orWhere('documento', 'like', "%{$termino}%")
+                          ->orWhere('telefono', 'like', "%{$termino}%")
+                          ->orWhere('email', 'like', "%{$termino}%");
+                })
+                ->orderBy('nombres')
+                ->limit(15)
+                ->get();
+            
+            return response()->json([
+                'success' => true,
+                'clientes' => $clientes->map(function($cliente) {
+                    return [
+                        'id' => $cliente->id,
+                        'nombres' => $cliente->nombres,
+                        'apellidos' => $cliente->apellidos,
+                        'nombre_completo' => $cliente->nombres . ' ' . $cliente->apellidos,
+                        'documento' => $cliente->documento,
+                        'tipo_documento' => $cliente->tipo_documento,
+                        'telefono' => $cliente->telefono,
+                        'email' => $cliente->email,
+                        'direccion' => $cliente->direccion,
+                        'fecha_nacimiento' => $cliente->fecha_nacimiento,
+                        'activo' => $cliente->activo
+                    ];
+                })
+            ]);
+            
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al buscar clientes: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

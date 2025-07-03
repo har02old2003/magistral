@@ -54,6 +54,13 @@
                 </a>
             </li>
             
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('laboratorio.*') ? 'active' : '' }}" href="{{ route('laboratorio.index') }}">
+                    <i class="bi bi-flask me-3"></i>
+                    <span>Laboratorio</span>
+                </a>
+            </li>
+            
             @if(auth()->user()->esAdministrador())
             <li class="nav-divider"></li>
             <li class="nav-header">

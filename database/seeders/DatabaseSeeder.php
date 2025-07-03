@@ -25,17 +25,29 @@ class DatabaseSeeder extends Seeder
     
     private function createTestData()
     {
+        // Crear un proveedor primero
+        $proveedor = \App\Models\Proveedor::create([
+            'nombre' => 'Farmacéuticos Unidos S.A.',
+            'ruc' => '20123456789',
+            'telefono' => '014567890',
+            'email' => 'ventas@farmaceuticos.com',
+            'direccion' => 'Jr. Comercio 456',
+            'contacto' => 'María Pérez',
+            'activo' => true
+        ]);
+        
         // Crear productos de prueba
         $categoria = \App\Models\Categoria::first();
         $marca = \App\Models\Marca::first();
         
-        if ($categoria && $marca) {
+        if ($categoria && $marca && $proveedor) {
             \App\Models\Producto::create([
                 'codigo' => 'MED001',
                 'nombre' => 'Paracetamol 500mg',
                 'descripcion' => 'Analgésico y antipirético',
                 'categoria_id' => $categoria->id,
                 'marca_id' => $marca->id,
+                'proveedor_id' => $proveedor->id,
                 'precio_compra' => 15.00,
                 'precio_venta' => 25.00,
                 'stock_actual' => 100,
@@ -51,6 +63,7 @@ class DatabaseSeeder extends Seeder
                 'descripcion' => 'Antiinflamatorio no esteroideo',
                 'categoria_id' => $categoria->id,
                 'marca_id' => $marca->id,
+                'proveedor_id' => $proveedor->id,
                 'precio_compra' => 20.00,
                 'precio_venta' => 35.00,
                 'stock_actual' => 5, // Stock bajo para prueba
@@ -66,6 +79,7 @@ class DatabaseSeeder extends Seeder
                 'descripcion' => 'Ácido acetilsalicílico',
                 'categoria_id' => $categoria->id,
                 'marca_id' => $marca->id,
+                'proveedor_id' => $proveedor->id,
                 'precio_compra' => 12.00,
                 'precio_venta' => 20.00,
                 'stock_actual' => 0, // Agotado para prueba
@@ -80,21 +94,11 @@ class DatabaseSeeder extends Seeder
         \App\Models\Cliente::create([
             'nombres' => 'Juan Carlos',
             'apellidos' => 'García López',
-            'dni' => '12345678',
+            'documento' => '12345678',
+            'tipo_documento' => 'DNI',
             'telefono' => '987654321',
             'email' => 'juan@email.com',
             'direccion' => 'Av. Principal 123',
-            'activo' => true
-        ]);
-        
-        // Crear un proveedor de prueba
-        \App\Models\Proveedor::create([
-            'nombre' => 'Farmacéuticos Unidos S.A.',
-            'ruc' => '20123456789',
-            'telefono' => '014567890',
-            'email' => 'ventas@farmaceuticos.com',
-            'direccion' => 'Jr. Comercio 456',
-            'contacto' => 'María Pérez',
             'activo' => true
         ]);
     }

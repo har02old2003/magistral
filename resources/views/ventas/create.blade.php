@@ -110,20 +110,17 @@
                                             <div class="col-md-6">
                                                 <label for="buscar_producto" class="form-label">Buscar Producto</label>
                                                 <input type="text" class="form-control" id="buscar_producto" placeholder="Buscar por nombre o código...">
+                                                <!-- Contenedor para resultados de búsqueda -->
+                                                <div id="resultados_busqueda" class="mt-2" style="display: none;">
+                                                    <div class="list-group" id="lista_productos_encontrados">
+                                                        <!-- Los productos encontrados se mostrarán aquí -->
+                                                    </div>
+                                                </div>
                                             </div>
                                             <div class="col-md-4">
-                                                <label for="select_producto" class="form-label">Seleccionar</label>
-                                                <select class="form-select" id="select_producto">
-                                                    <option value="">Seleccionar producto</option>
-                                                    @foreach($productos as $producto)
-                                                    <option value="{{ $producto->id }}" 
-                                                            data-precio="{{ $producto->precio_venta }}" 
-                                                            data-stock="{{ $producto->stock }}"
-                                                            data-nombre="{{ $producto->nombre }}"
-                                                            data-codigo="{{ $producto->codigo }}">
-                                                        {{ $producto->nombre }} ({{ $producto->codigo }})
-                                                    </option>
-                                                    @endforeach
+                                                <label for="select_producto" class="form-label">Producto Seleccionado</label>
+                                                <select class="form-select" id="select_producto" disabled>
+                                                    <option value="">Selecciona un producto de la búsqueda</option>
                                                 </select>
                                             </div>
                                             <div class="col-md-2">
@@ -300,6 +297,39 @@
             border: none;
         }
 
+        /* Estilos para resultados de búsqueda */
+        #resultados_busqueda {
+            position: absolute;
+            width: 100%;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        #lista_productos_encontrados .list-group-item {
+            border: none;
+            border-bottom: 1px solid #f1f3f4;
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        #lista_productos_encontrados .list-group-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        #lista_productos_encontrados .list-group-item:last-child {
+            border-bottom: none;
+        }
+
+        .col-md-6 {
+            position: relative;
+        }
+
         .btn-primary {
             background: var(--primary-gradient);
             border: none;
@@ -324,31 +354,143 @@
     <script>
         let productosVenta = [];
         let contadorProductos = 0;
+        let productosEncontrados = [];
+        let timeoutBusqueda = null;
 
-        // Filtrar productos en tiempo real
-        document.getElementById('buscar_producto').addEventListener('keyup', function() {
-            const busqueda = this.value.toLowerCase();
-            const select = document.getElementById('select_producto');
-            const opciones = select.querySelectorAll('option');
-
-            opciones.forEach(opcion => {
-                if (opcion.value === '') return;
-                
-                const texto = opcion.textContent.toLowerCase();
-                if (texto.includes(busqueda)) {
-                    opcion.style.display = '';
-                } else {
-                    opcion.style.display = 'none';
-                }
-            });
+        // Búsqueda AJAX de productos
+        document.getElementById('buscar_producto').addEventListener('input', function() {
+            const busqueda = this.value.trim();
+            
+            // Limpiar timeout anterior
+            if (timeoutBusqueda) {
+                clearTimeout(timeoutBusqueda);
+            }
+            
+            // Ocultar resultados si no hay búsqueda
+            if (busqueda.length === 0) {
+                ocultarResultadosBusqueda();
+                return;
+            }
+            
+            // Esperar 300ms antes de buscar (debounce)
+            timeoutBusqueda = setTimeout(() => {
+                buscarProductosAjax(busqueda);
+            }, 300);
         });
+
+        // Función para buscar productos via AJAX
+        function buscarProductosAjax(termino) {
+            fetch(`/ventas-buscar-producto?q=${encodeURIComponent(termino)}`)
+                .then(response => response.json())
+                .then(productos => {
+                    productosEncontrados = productos;
+                    mostrarResultadosBusqueda(productos);
+                })
+                .catch(error => {
+                    console.error('Error al buscar productos:', error);
+                    mostrarMensaje('error', 'Error al buscar productos');
+                });
+        }
+
+        // Función para mostrar resultados de búsqueda
+        function mostrarResultadosBusqueda(productos) {
+            const contenedor = document.getElementById('resultados_busqueda');
+            const lista = document.getElementById('lista_productos_encontrados');
+            
+            if (productos.length === 0) {
+                lista.innerHTML = '<div class="list-group-item text-muted">No se encontraron productos</div>';
+            } else {
+                lista.innerHTML = '';
+                productos.forEach(producto => {
+                    const item = document.createElement('div');
+                    item.className = 'list-group-item list-group-item-action';
+                    item.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">${producto.nombre}</h6>
+                                <small class="text-muted">
+                                    Código: ${producto.codigo} | 
+                                    Marca: ${producto.marca} | 
+                                    Stock: ${producto.stock_actual}
+                                </small>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold text-success">S/ ${parseFloat(producto.precio_venta).toFixed(2)}</div>
+                                <button type="button" class="btn btn-sm btn-primary" onclick="seleccionarProducto(${producto.id})">
+                                    Seleccionar
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    lista.appendChild(item);
+                });
+            }
+            
+            contenedor.style.display = 'block';
+        }
+
+        // Función para ocultar resultados de búsqueda
+        function ocultarResultadosBusqueda() {
+            document.getElementById('resultados_busqueda').style.display = 'none';
+        }
+
+        // Función para seleccionar un producto de la búsqueda
+        function seleccionarProducto(productoId) {
+            const producto = productosEncontrados.find(p => p.id == productoId);
+            if (!producto) return;
+            
+            const select = document.getElementById('select_producto');
+            
+            // Limpiar opciones anteriores
+            select.innerHTML = '<option value="">Producto seleccionado</option>';
+            
+            // Crear nueva opción
+            const option = document.createElement('option');
+            option.value = producto.id;
+            option.textContent = `${producto.nombre} (${producto.codigo})`;
+            option.dataset.precio = producto.precio_venta;
+            option.dataset.stock = producto.stock_actual;
+            option.dataset.nombre = producto.nombre;
+            option.dataset.codigo = producto.codigo;
+            
+            select.appendChild(option);
+            select.value = producto.id;
+            select.disabled = false;
+            
+            // Ocultar resultados de búsqueda
+            ocultarResultadosBusqueda();
+            
+            // Limpiar campo de búsqueda
+            document.getElementById('buscar_producto').value = '';
+        }
+
+        // Función para mostrar mensajes
+        function mostrarMensaje(tipo, mensaje) {
+            // Crear alerta temporal
+            const alerta = document.createElement('div');
+            alerta.className = `alert alert-${tipo === 'error' ? 'danger' : tipo} alert-dismissible fade show position-fixed`;
+            alerta.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alerta.innerHTML = `
+                ${mensaje}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alerta);
+            
+            // Remover después de 3 segundos
+            setTimeout(() => {
+                if (alerta.parentNode) {
+                    alerta.parentNode.removeChild(alerta);
+                }
+            }, 3000);
+        }
 
         function agregarProducto() {
             const selectProducto = document.getElementById('select_producto');
             const productoId = selectProducto.value;
             
             if (!productoId) {
-                alert('Selecciona un producto');
+                mostrarMensaje('warning', 'Selecciona un producto');
                 return;
             }
 
@@ -368,8 +510,9 @@
                 if (productoExistente.cantidad < producto.stock) {
                     productoExistente.cantidad++;
                     actualizarTablaProductos();
+                    mostrarMensaje('success', 'Cantidad aumentada');
                 } else {
-                    alert('Stock insuficiente');
+                    mostrarMensaje('warning', 'Stock insuficiente');
                 }
                 return;
             }
@@ -380,7 +523,10 @@
             
             // Limpiar selección
             selectProducto.value = '';
-            document.getElementById('buscar_producto').value = '';
+            selectProducto.innerHTML = '<option value="">Selecciona un producto de la búsqueda</option>';
+            selectProducto.disabled = true;
+            
+            mostrarMensaje('success', `${producto.nombre} agregado al carrito`);
         }
 
         function actualizarTablaProductos() {
@@ -456,8 +602,10 @@
         }
 
         function eliminarProducto(index) {
+            const producto = productosVenta[index];
             productosVenta.splice(index, 1);
             actualizarTablaProductos();
+            mostrarMensaje('info', `${producto.nombre} removido del carrito`);
         }
 
         function actualizarTotales() {
@@ -479,6 +627,16 @@
                 contadorProductos = 0;
                 actualizarTablaProductos();
                 document.getElementById('formVenta').reset();
+                
+                // Limpiar también el select de productos
+                const select = document.getElementById('select_producto');
+                select.innerHTML = '<option value="">Selecciona un producto de la búsqueda</option>';
+                select.disabled = true;
+                
+                // Ocultar resultados de búsqueda
+                ocultarResultadosBusqueda();
+                
+                mostrarMensaje('success', 'Venta limpiada');
             }
         }
 
@@ -486,7 +644,7 @@
         document.getElementById('formVenta').addEventListener('submit', function(e) {
             if (productosVenta.length === 0) {
                 e.preventDefault();
-                alert('Agrega al menos un producto');
+                mostrarMensaje('warning', 'Agrega al menos un producto');
                 return;
             }
 
@@ -508,6 +666,16 @@
                 inputCantidad.value = producto.cantidad;
                 this.appendChild(inputCantidad);
             });
+        });
+
+        // Cerrar resultados de búsqueda al hacer clic fuera
+        document.addEventListener('click', function(e) {
+            const resultados = document.getElementById('resultados_busqueda');
+            const buscarInput = document.getElementById('buscar_producto');
+            
+            if (!resultados.contains(e.target) && e.target !== buscarInput) {
+                ocultarResultadosBusqueda();
+            }
         });
     </script>
 </body>

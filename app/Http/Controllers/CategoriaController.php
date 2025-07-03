@@ -308,4 +308,116 @@ class CategoriaController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * 💾 CREAR CATEGORÍA VÍA AJAX
+     */
+    public function storeAjax(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'nombre' => [
+                    'required',
+                    'string',
+                    'min:2',
+                    'max:100',
+                    'unique:categorias,nombre',
+                    'regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\.\-]+$/'
+                ],
+                'descripcion' => 'nullable|string|max:255',
+                'activo' => 'boolean'
+            ], [
+                'nombre.required' => 'El nombre de la categoría es obligatorio.',
+                'nombre.min' => 'El nombre debe tener al menos 2 caracteres.',
+                'nombre.max' => 'El nombre no puede superar los 100 caracteres.',
+                'nombre.unique' => 'Ya existe una categoría con este nombre.',
+                'nombre.regex' => 'El nombre solo puede contener letras, espacios, puntos y guiones.',
+                'descripcion.max' => 'La descripción no puede superar los 255 caracteres.'
+            ]);
+
+            // Limpiar datos
+            $validated['nombre'] = trim(ucwords(strtolower($validated['nombre'])));
+            $validated['descripcion'] = $validated['descripcion'] ? trim($validated['descripcion']) : null;
+            $validated['activo'] = $request->has('activo') ? true : false;
+
+            $categoria = Categoria::create($validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Categoría "' . $categoria->nombre . '" creada exitosamente.',
+                'categoria' => [
+                    'id' => $categoria->id,
+                    'nombre' => $categoria->nombre,
+                    'descripcion' => $categoria->descripcion,
+                    'activo' => $categoria->activo,
+                    'productos_count' => 0
+                ]
+            ], 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación.',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al crear la categoría: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * 📝 ACTUALIZAR CATEGORÍA VÍA AJAX
+     */
+    public function updateAjax(Request $request, Categoria $categoria)
+    {
+        try {
+            $validated = $request->validate([
+                'nombre' => [
+                    'required',
+                    'string',
+                    'min:2',
+                    'max:100',
+                    Rule::unique('categorias', 'nombre')->ignore($categoria->id),
+                    'regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\.\-]+$/'
+                ],
+                'descripcion' => 'nullable|string|max:255',
+                'activo' => 'boolean'
+            ], [
+                'nombre.required' => 'El nombre de la categoría es obligatorio.',
+                'nombre.min' => 'El nombre debe tener al menos 2 caracteres.',
+                'nombre.max' => 'El nombre no puede superar los 100 caracteres.',
+                'nombre.unique' => 'Ya existe una categoría con este nombre.',
+                'nombre.regex' => 'El nombre solo puede contener letras, espacios, puntos y guiones.',
+                'descripcion.max' => 'La descripción no puede superar los 255 caracteres.'
+            ]);
+
+            // Limpiar datos
+            $validated['nombre'] = trim(ucwords(strtolower($validated['nombre'])));
+            $validated['descripcion'] = $validated['descripcion'] ? trim($validated['descripcion']) : null;
+            $validated['activo'] = $request->has('activo') ? true : false;
+
+            $categoria->update($validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Categoría "' . $categoria->nombre . '" actualizada exitosamente.',
+                'categoria' => $categoria->fresh()
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación.',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar la categoría: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

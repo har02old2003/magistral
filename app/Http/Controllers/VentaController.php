@@ -39,6 +39,11 @@ class VentaController extends Controller
         // Obtener clientes activos para el modal de nueva venta
         $clientes = Cliente::where('activo', true)->orderBy('nombres')->get();
         
+        $productos = \App\Models\Producto::where('activo', true)
+            ->where('stock_actual', '>', 0)
+            ->orderBy('nombre')
+            ->get();
+        
         return view('ventas.index', compact(
             'ventas', 
             'ventasHoy', 
@@ -46,7 +51,8 @@ class VentaController extends Controller
             'ventasMes', 
             'promedioVenta',
             'vendedores',
-            'clientes'
+            'clientes',
+            'productos'
         ));
     }
 
@@ -124,12 +130,10 @@ class VentaController extends Controller
                 $detalle->venta_id = $venta->id;
                 $detalle->producto_id = $producto->id;
                 $detalle->cantidad = $item['cantidad'];
-                $detalle->precio_unitario = $producto->precio_venta;
-                $detalle->subtotal = $producto->precio_venta * $item['cantidad'];
-                $detalle->lote = $producto->lote ?? 'SIN_LOTE';
-                $detalle->fecha_vencimiento = $producto->fecha_vencimiento ?? now()->addYear();
-                $detalle->lote = $producto->lote ?? 'SIN_LOTE';
-                $detalle->fecha_vencimiento = $producto->fecha_vencimiento ?? now()->addYear();
+                $detalle->precio_unitario = $item['precio_unitario'] ?? $producto->precio_venta;
+                $detalle->subtotal = $detalle->precio_unitario * $item['cantidad'];
+                $detalle->lote = $item['lote'] ?? $producto->lote ?? 'SIN_LOTE';
+                $detalle->fecha_vencimiento = $item['fecha_vencimiento'] ?? $producto->fecha_vencimiento ?? now()->addYear();
                 $detalle->save();
 
                 // Actualizar stock del producto
@@ -190,6 +194,7 @@ class VentaController extends Controller
             $venta->igv = $request->igv;
             $venta->total = $request->total;
             $venta->estado = 'completada';
+            $venta->observaciones = $request->observaciones;
             $venta->save();
 
             // Procesar cada producto en la venta
@@ -201,12 +206,10 @@ class VentaController extends Controller
                 $detalle->venta_id = $venta->id;
                 $detalle->producto_id = $producto->id;
                 $detalle->cantidad = $item['cantidad'];
-                $detalle->precio_unitario = $producto->precio_venta;
-                $detalle->subtotal = $producto->precio_venta * $item['cantidad'];
-                $detalle->lote = $producto->lote ?? 'SIN_LOTE';
-                $detalle->fecha_vencimiento = $producto->fecha_vencimiento ?? now()->addYear();
-                $detalle->lote = $producto->lote ?? 'SIN_LOTE';
-                $detalle->fecha_vencimiento = $producto->fecha_vencimiento ?? now()->addYear();
+                $detalle->precio_unitario = $item['precio_unitario'] ?? $producto->precio_venta;
+                $detalle->subtotal = $detalle->precio_unitario * $item['cantidad'];
+                $detalle->lote = $item['lote'] ?? $producto->lote ?? 'SIN_LOTE';
+                $detalle->fecha_vencimiento = $item['fecha_vencimiento'] ?? $producto->fecha_vencimiento ?? now()->addYear();
                 $detalle->save();
 
                 // Actualizar stock del producto
@@ -222,27 +225,7 @@ class VentaController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Venta procesada exitosamente',
-                'numero_venta' => $numeroVenta,
-                'venta' => [
-                    'id' => $venta->id,
-                    'numero_ticket' => $venta->numero_ticket,
-                    'fecha' => $venta->fecha->format('Y-m-d H:i:s'),
-                    'cliente' => $venta->cliente ? $venta->cliente->nombres . ' ' . $venta->cliente->apellidos : 'Cliente General',
-                    'vendedor' => $venta->user->name,
-                    'tipo_pago' => $venta->tipo_pago,
-                    'subtotal' => $venta->subtotal,
-                    'igv' => $venta->igv,
-                    'total' => $venta->total,
-                    'productos' => $venta->detalles->map(function($detalle) {
-                        return [
-                            'nombre' => $detalle->producto->nombre,
-                            'codigo' => $detalle->producto->codigo,
-                            'cantidad' => $detalle->cantidad,
-                            'precio' => $detalle->precio_unitario,
-                            'subtotal' => $detalle->subtotal
-                        ];
-                    })
-                ]
+                'venta' => $venta
             ], 201);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -269,9 +252,10 @@ class VentaController extends Controller
      */
     public function show(Venta $venta)
     {
+        // Cargar relaciones necesarias
         $venta->load(['cliente', 'user', 'detalles.producto']);
         
-        // Si es una petición AJAX, devolver JSON
+        // Si es petición AJAX, devolver JSON
         if (request()->ajax() || request()->expectsJson()) {
             return response()->json([
                 'success' => true,
@@ -279,6 +263,7 @@ class VentaController extends Controller
             ]);
         }
         
+        // Vista normal para web
         return view('ventas.show', compact('venta'));
     }
 
@@ -287,18 +272,23 @@ class VentaController extends Controller
      */
     public function edit(Venta $venta)
     {
-        // Solo administrador puede editar ventas
-        if (Auth::user()->role !== 'administrador') {
-            return redirect()->back()->with('error', 'No tienes permisos para realizar esta acción.');
+        // Cargar relaciones necesarias
+        $venta->load(['cliente', 'user', 'detalles.producto']);
+        $detalles = $venta->detalles;
+        // Si es petición AJAX, devolver JSON
+        if (request()->ajax() || request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'venta' => $venta
+            ]);
         }
-
-        // Solo permitir editar ventas del mismo día
-        if (!Carbon::parse($venta->fecha)->isToday()) {
-            return redirect()->back()->with('error', 'Solo se pueden editar ventas del día actual.');
-        }
-
+        // Vista normal para web
         $clientes = Cliente::where('activo', true)->orderBy('nombres')->get();
-        return view('ventas.edit', compact('venta', 'clientes'));
+        $productos = Producto::with(['categoria', 'marca'])
+                            ->where('activo', true)
+                            ->orderBy('nombre')
+                            ->get();
+        return view('ventas.edit', compact('venta', 'clientes', 'productos', 'detalles'));
     }
 
     /**
@@ -306,46 +296,111 @@ class VentaController extends Controller
      */
     public function update(Request $request, Venta $venta)
     {
-        // Solo administrador puede actualizar ventas
-        if (Auth::user()->role !== 'administrador') {
-            if ($request->ajax() || $request->expectsJson()) {
+        // Si es petición AJAX, usar validación JSON
+        if ($request->ajax() || $request->expectsJson()) {
+            $request->validate([
+                'tipo_pago' => 'required|in:efectivo,tarjeta,transferencia',
+                'estado' => 'required|in:completada,cancelada,pendiente',
+                'observaciones' => 'nullable|string|max:500'
+            ]);
+
+            try {
+                DB::beginTransaction();
+
+                $venta->tipo_pago = $request->tipo_pago;
+                $venta->estado = $request->estado;
+                $venta->observaciones = $request->observaciones;
+                $venta->save();
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Venta actualizada exitosamente',
+                    'venta' => $venta->load(['cliente', 'user', 'detalles.producto'])
+                ]);
+
+            } catch (\Exception $e) {
+                DB::rollback();
                 return response()->json([
                     'success' => false,
-                    'message' => 'No tienes permisos para realizar esta acción.'
-                ], 403);
+                    'message' => 'Error al actualizar la venta: ' . $e->getMessage()
+                ], 500);
             }
-            return back()->with('error', 'No tienes permisos para realizar esta acción.');
         }
 
-        // Solo permitir editar ventas del mismo día
-        if (!Carbon::parse($venta->fecha)->isToday()) {
-            if ($request->ajax() || $request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Solo se pueden editar ventas del día actual.'
-                ], 400);
-            }
-            return back()->with('error', 'Solo se pueden editar ventas del día actual.');
-        }
-
+        // Validación normal para formularios web
         $request->validate([
             'cliente_id' => 'nullable|exists:clientes,id',
-            'tipo_pago' => 'required|in:efectivo,tarjeta,transferencia,yape',
+            'tipo_pago' => 'required|in:efectivo,tarjeta,transferencia',
+            'productos' => 'required|array|min:1',
+            'productos.*.producto_id' => 'required|exists:productos,id',
+            'productos.*.cantidad' => 'required|integer|min:1',
             'observaciones' => 'nullable|string|max:500'
         ]);
 
-        $venta->update($request->only(['cliente_id', 'tipo_pago', 'observaciones']));
+        DB::beginTransaction();
+        try {
+            // Actualizar venta básica
+            $venta->cliente_id = $request->cliente_id;
+            $venta->tipo_pago = $request->tipo_pago;
+            $venta->observaciones = $request->observaciones;
+            
+            $subtotal = 0;
 
-        // Si es una petición AJAX, devolver JSON
-        if ($request->ajax() || $request->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Venta actualizada exitosamente',
-                'venta' => $venta->fresh(['cliente', 'user', 'detalles.producto'])
-            ]);
+            // Restaurar stock de productos originales
+            foreach ($venta->detalles as $detalle) {
+                $producto = Producto::find($detalle->producto_id);
+                if ($producto) {
+                    $producto->stock_actual += $detalle->cantidad;
+                    $producto->save();
+                }
+            }
+
+            // Eliminar detalles existentes
+            $venta->detalles()->delete();
+
+            // Procesar nuevos productos
+            foreach ($request->productos as $item) {
+                $producto = Producto::findOrFail($item['producto_id']);
+                
+                // Verificar stock disponible
+                if ($producto->stock_actual < $item['cantidad']) {
+                    return back()->with('error', "Stock insuficiente para el producto {$producto->nombre}. Stock disponible: {$producto->stock_actual}");
+                }
+                
+                $subtotal += $producto->precio_venta * $item['cantidad'];
+
+                // Crear nuevo detalle
+                $detalle = new DetalleVenta();
+                $detalle->venta_id = $venta->id;
+                $detalle->producto_id = $producto->id;
+                $detalle->cantidad = $item['cantidad'];
+                $detalle->precio_unitario = $producto->precio_venta;
+                $detalle->subtotal = $producto->precio_venta * $item['cantidad'];
+                $detalle->lote = $item['lote'] ?? $producto->lote ?? 'SIN_LOTE';
+                $detalle->fecha_vencimiento = $item['fecha_vencimiento'] ?? $producto->fecha_vencimiento ?? now()->addYear();
+                $detalle->save();
+
+                // Actualizar stock del producto
+                $producto->stock_actual -= $item['cantidad'];
+                $producto->save();
+            }
+
+            // Recalcular totales
+            $venta->subtotal = $subtotal;
+            $venta->igv = $subtotal * 0.18;
+            $venta->total = $venta->subtotal + $venta->igv;
+            $venta->save();
+
+            DB::commit();
+
+            return redirect()->route('ventas.index')->with('success', 'Venta actualizada exitosamente');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->with('error', $e->getMessage());
         }
-
-        return redirect()->route('ventas.index')->with('success', 'Venta actualizada exitosamente');
     }
 
     /**
@@ -353,35 +408,44 @@ class VentaController extends Controller
      */
     public function destroy(Venta $venta)
     {
-        // Solo administrador puede eliminar ventas
-        if (Auth::user()->role !== 'administrador') {
-            return back()->with('error', 'No tienes permisos para realizar esta acción.');
-        }
-
-        // Solo permitir cancelar ventas del mismo día
-        if (!Carbon::parse($venta->fecha)->isToday()) {
-            return back()->with('error', 'Solo se pueden cancelar ventas del día actual.');
-        }
-
         DB::beginTransaction();
         try {
-            // Restaurar stock de productos
+            // Restaurar stock de los productos vendidos
             foreach ($venta->detalles as $detalle) {
-                $producto = $detalle->producto;
-                $producto->stock_actual += $detalle->cantidad;
-                $producto->save();
+                $producto = Producto::find($detalle->producto_id);
+                if ($producto) {
+                    $producto->stock_actual += $detalle->cantidad;
+                    $producto->save();
+                }
             }
 
-            // Eliminar la venta y sus detalles
-            $venta->detalles()->delete();
-            $venta->delete();
+            // Cambiar estado a cancelada en lugar de eliminar físicamente
+            $venta->estado = 'cancelada';
+            $venta->save();
 
             DB::commit();
+
+            // Si es petición AJAX, devolver JSON
+            if (request()->ajax() || request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Venta anulada exitosamente'
+                ]);
+            }
 
             return redirect()->route('ventas.index')->with('success', 'Venta cancelada exitosamente');
 
         } catch (\Exception $e) {
             DB::rollback();
+            
+            // Si es petición AJAX, devolver error JSON
+            if (request()->ajax() || request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error al anular la venta: ' . $e->getMessage()
+                ], 500);
+            }
+
             return back()->with('error', $e->getMessage());
         }
     }
@@ -418,9 +482,11 @@ class VentaController extends Controller
                 'codigo' => $producto->codigo,
                 'nombre' => $producto->nombre,
                 'marca' => $producto->marca->nombre ?? '',
-                'precio' => $producto->precio_venta,
-                'stock' => $producto->stock_actual,
-                'categoria' => $producto->categoria->nombre ?? ''
+                'precio_venta' => $producto->precio_venta,
+                'stock_actual' => $producto->stock_actual,
+                'categoria' => $producto->categoria->nombre ?? '',
+                'lote' => $producto->lote ?? 'LOTE001',
+                'fecha_vencimiento' => $producto->fecha_vencimiento ?? '2025-12-31'
             ];
         }));
     }
@@ -518,5 +584,136 @@ class VentaController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+    
+    /**
+     * 🔍 BUSCAR CLIENTE AJAX
+     */
+    public function buscarClienteAjax(Request $request)
+    {
+        try {
+            $termino = $request->get('q', '');
+            
+            if (empty($termino)) {
+                return response()->json([
+                    'success' => true,
+                    'clientes' => []
+                ]);
+            }
+            
+            $clientes = Cliente::where('activo', true)
+                ->where(function($query) use ($termino) {
+                    $query->where('nombres', 'like', "%{$termino}%")
+                          ->orWhere('apellidos', 'like', "%{$termino}%")
+                          ->orWhere('dni', 'like', "%{$termino}%")
+                          ->orWhere('telefono', 'like', "%{$termino}%");
+                })
+                ->limit(10)
+                ->get();
+            
+            return response()->json([
+                'success' => true,
+                'clientes' => $clientes->map(function($cliente) {
+                    return [
+                        'id' => $cliente->id,
+                        'nombres' => $cliente->nombres,
+                        'apellidos' => $cliente->apellidos,
+                        'nombre_completo' => $cliente->nombres . ' ' . $cliente->apellidos,
+                        'dni' => $cliente->dni,
+                        'telefono' => $cliente->telefono,
+                        'email' => $cliente->email
+                    ];
+                })
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al buscar clientes: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * 📊 CALCULAR TOTALES AJAX
+     */
+    public function calcularTotalesAjax(Request $request)
+    {
+        try {
+            $request->validate([
+                'productos' => 'required|array|min:1',
+                'productos.*.producto_id' => 'required|exists:productos,id',
+                'productos.*.cantidad' => 'required|integer|min:1',
+                'descuento' => 'nullable|numeric|min:0|max:100'
+            ]);
+            
+            $subtotal = 0;
+            $productosCalculados = [];
+            
+            foreach ($request->productos as $item) {
+                $producto = Producto::findOrFail($item['producto_id']);
+                
+                $precioUnitario = $producto->precio_venta;
+                $cantidad = $item['cantidad'];
+                $subtotalProducto = $precioUnitario * $cantidad;
+                
+                $subtotal += $subtotalProducto;
+                
+                $productosCalculados[] = [
+                    'producto_id' => $producto->id,
+                    'nombre' => $producto->nombre,
+                    'precio_unitario' => $precioUnitario,
+                    'cantidad' => $cantidad,
+                    'subtotal' => $subtotalProducto,
+                    'stock_disponible' => $producto->stock_actual
+                ];
+            }
+            
+            // Aplicar descuento si existe
+            $descuento = $request->descuento ?? 0;
+            $montoDescuento = ($subtotal * $descuento) / 100;
+            $subtotalConDescuento = $subtotal - $montoDescuento;
+            
+            // Calcular IGV (18%)
+            $igv = $subtotalConDescuento * 0.18;
+            $total = $subtotalConDescuento + $igv;
+            
+            return response()->json([
+                'success' => true,
+                'calculos' => [
+                    'subtotal' => round($subtotal, 2),
+                    'descuento_porcentaje' => $descuento,
+                    'monto_descuento' => round($montoDescuento, 2),
+                    'subtotal_con_descuento' => round($subtotalConDescuento, 2),
+                    'igv' => round($igv, 2),
+                    'total' => round($total, 2)
+                ],
+                'productos' => $productosCalculados
+            ]);
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Datos inválidos',
+                'errors' => $e->errors()
+            ], 422);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al calcular totales: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function directa()
+    {
+        $clientes = \App\Models\Cliente::where('activo', true)->orderBy('nombres')->get();
+        $productos = \App\Models\Producto::with(['categoria', 'marca'])
+            ->where('activo', true)
+            ->where('stock_actual', '>', 0)
+            ->orderBy('nombre')
+            ->get();
+        return view('ventas.directa', compact('clientes', 'productos'));
     }
 }

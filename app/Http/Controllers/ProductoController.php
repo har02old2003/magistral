@@ -81,12 +81,20 @@ class ProductoController extends Controller
     {
         // Solo administrador puede crear productos
         if (Auth::user()->role !== 'administrador') {
+            if (request()->expectsJson()) {
+                return response()->json(['error' => 'No tienes permisos para realizar esta acción.'], 403);
+            }
             return redirect()->back()->with('error', 'No tienes permisos para realizar esta acción.');
         }
 
         $categorias = Categoria::where('activo', true)->orderBy('nombre')->get();
         $marcas = Marca::where('activo', true)->orderBy('nombre')->get();
         $proveedores = Proveedor::where('activo', true)->orderBy('nombre')->get();
+        
+        if (request()->expectsJson()) {
+            $html = view('productos._create_form', compact('categorias', 'marcas', 'proveedores'))->render();
+            return response()->json(['html' => $html]);
+        }
         
         return view('productos.create', compact('categorias', 'marcas', 'proveedores'));
     }
@@ -302,12 +310,20 @@ class ProductoController extends Controller
     {
         // Solo administrador puede editar productos
         if (Auth::user()->role !== 'administrador') {
+            if (request()->expectsJson()) {
+                return response()->json(['error' => 'No tienes permisos para realizar esta acción.'], 403);
+            }
             return redirect()->back()->with('error', 'No tienes permisos para realizar esta acción.');
         }
 
         $categorias = Categoria::where('activo', true)->orderBy('nombre')->get();
         $marcas = Marca::where('activo', true)->orderBy('nombre')->get();
         $proveedores = Proveedor::where('activo', true)->orderBy('nombre')->get();
+        
+        if (request()->expectsJson()) {
+            $html = view('productos._edit_form', compact('producto', 'categorias', 'marcas', 'proveedores'))->render();
+            return response()->json(['html' => $html]);
+        }
         
         return view('productos.edit', compact('producto', 'categorias', 'marcas', 'proveedores'));
     }
@@ -657,6 +673,276 @@ class ProductoController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al generar código: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * 💾 CREAR PRODUCTO VÍA AJAX
+     */
+    public function storeAjax(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'codigo' => [
+                    'required',
+                    'string',
+                    'max:50',
+                    'regex:/^[A-Z0-9\-]+$/',
+                    'unique:productos,codigo'
+                ],
+                'nombre' => [
+                    'required',
+                    'string',
+                    'min:2',
+                    'max:255'
+                ],
+                'descripcion' => 'nullable|string|max:1000',
+                'precio_compra' => [
+                    'required',
+                    'numeric',
+                    'min:0.01',
+                    'max:99999.99'
+                ],
+                'precio_venta' => [
+                    'required',
+                    'numeric',
+                    'min:0.01',
+                    'max:99999.99',
+                    'gt:precio_compra'
+                ],
+                'stock_actual' => [
+                    'required',
+                    'integer',
+                    'min:0',
+                    'max:99999'
+                ],
+                'stock_minimo' => [
+                    'required',
+                    'integer',
+                    'min:1',
+                    'max:9999'
+                ],
+                'lote' => [
+                    'required',
+                    'string',
+                    'max:50',
+                    'regex:/^[A-Z0-9\-]+$/'
+                ],
+                'fecha_vencimiento' => [
+                    'required',
+                    'date',
+                    'after:today'
+                ],
+                'meses_vencimiento' => 'required|in:12,18,24',
+                'presentacion' => 'nullable|string|max:100',
+                'principio_activo' => 'nullable|string|max:255',
+                'concentracion' => 'nullable|string|max:100',
+                'laboratorio' => 'nullable|string|max:255',
+                'registro_sanitario' => [
+                    'nullable',
+                    'string',
+                    'max:50',
+                    'regex:/^[A-Z0-9\-]+$/'
+                ],
+                'requiere_receta' => 'boolean',
+                'activo' => 'boolean',
+                'categoria_id' => 'required|exists:categorias,id',
+                'marca_id' => 'required|exists:marcas,id',
+                'proveedor_id' => 'required|exists:proveedores,id'
+            ]);
+
+            // Limpiar y formatear datos
+            $validated['codigo'] = strtoupper(trim($validated['codigo']));
+            $validated['nombre'] = trim(ucwords(strtolower($validated['nombre'])));
+            $validated['lote'] = strtoupper(trim($validated['lote']));
+            $validated['registro_sanitario'] = $validated['registro_sanitario'] ? strtoupper(trim($validated['registro_sanitario'])) : null;
+            $validated['presentacion'] = $validated['presentacion'] ? trim($validated['presentacion']) : null;
+            $validated['principio_activo'] = $validated['principio_activo'] ? trim(ucwords(strtolower($validated['principio_activo']))) : null;
+            $validated['concentracion'] = $validated['concentracion'] ? trim($validated['concentracion']) : null;
+            $validated['laboratorio'] = $validated['laboratorio'] ? trim(ucwords(strtolower($validated['laboratorio']))) : null;
+
+            $producto = Producto::create($validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Producto creado exitosamente.',
+                'producto' => $producto->load(['categoria', 'marca', 'proveedor'])
+            ], 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación.',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al crear el producto: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * 📝 ACTUALIZAR PRODUCTO VÍA AJAX
+     */
+    public function updateAjax(Request $request, Producto $producto)
+    {
+        try {
+            $validated = $request->validate([
+                'codigo' => [
+                    'required',
+                    'string',
+                    'max:50',
+                    'regex:/^[A-Z0-9\-]+$/',
+                    Rule::unique('productos', 'codigo')->ignore($producto->id)
+                ],
+                'nombre' => [
+                    'required',
+                    'string',
+                    'min:2',
+                    'max:255'
+                ],
+                'descripcion' => 'nullable|string|max:1000',
+                'precio_compra' => [
+                    'required',
+                    'numeric',
+                    'min:0.01',
+                    'max:99999.99'
+                ],
+                'precio_venta' => [
+                    'required',
+                    'numeric',
+                    'min:0.01',
+                    'max:99999.99',
+                    'gt:precio_compra'
+                ],
+                'stock_actual' => [
+                    'required',
+                    'integer',
+                    'min:0',
+                    'max:99999'
+                ],
+                'stock_minimo' => [
+                    'required',
+                    'integer',
+                    'min:1',
+                    'max:9999'
+                ],
+                'lote' => [
+                    'required',
+                    'string',
+                    'max:50',
+                    'regex:/^[A-Z0-9\-]+$/'
+                ],
+                'fecha_vencimiento' => [
+                    'required',
+                    'date',
+                    'after:today'
+                ],
+                'meses_vencimiento' => 'required|in:12,18,24',
+                'presentacion' => 'nullable|string|max:100',
+                'principio_activo' => 'nullable|string|max:255',
+                'concentracion' => 'nullable|string|max:100',
+                'laboratorio' => 'nullable|string|max:255',
+                'registro_sanitario' => [
+                    'nullable',
+                    'string',
+                    'max:50',
+                    'regex:/^[A-Z0-9\-]+$/'
+                ],
+                'requiere_receta' => 'boolean',
+                'activo' => 'boolean',
+                'categoria_id' => 'required|exists:categorias,id',
+                'marca_id' => 'required|exists:marcas,id',
+                'proveedor_id' => 'required|exists:proveedores,id'
+            ]);
+
+            // Limpiar y formatear datos
+            $validated['codigo'] = strtoupper(trim($validated['codigo']));
+            $validated['nombre'] = trim(ucwords(strtolower($validated['nombre'])));
+            $validated['lote'] = strtoupper(trim($validated['lote']));
+            $validated['registro_sanitario'] = $validated['registro_sanitario'] ? strtoupper(trim($validated['registro_sanitario'])) : null;
+            $validated['presentacion'] = $validated['presentacion'] ? trim($validated['presentacion']) : null;
+            $validated['principio_activo'] = $validated['principio_activo'] ? trim(ucwords(strtolower($validated['principio_activo']))) : null;
+            $validated['concentracion'] = $validated['concentracion'] ? trim($validated['concentracion']) : null;
+            $validated['laboratorio'] = $validated['laboratorio'] ? trim(ucwords(strtolower($validated['laboratorio']))) : null;
+
+            $producto->update($validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Producto actualizado exitosamente.',
+                'producto' => $producto->load(['categoria', 'marca', 'proveedor'])
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación.',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar el producto: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * 🔍 BUSCAR PRODUCTO POR CÓDIGO VÍA AJAX
+     */
+    public function buscarPorCodigoAjax(Request $request)
+    {
+        try {
+            $codigo = trim($request->get('codigo', ''));
+            
+            if (empty($codigo)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Código de producto requerido'
+                ], 400);
+            }
+            
+            $producto = Producto::with(['categoria', 'marca'])
+                ->where('activo', true)
+                ->where('codigo', strtoupper($codigo))
+                ->first();
+            
+            if (!$producto) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Producto no encontrado con el código: ' . $codigo
+                ], 404);
+            }
+            
+            if ($producto->stock_actual <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Producto sin stock disponible'
+                ], 400);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'producto' => [
+                    'id' => $producto->id,
+                    'codigo' => $producto->codigo,
+                    'nombre' => $producto->nombre,
+                    'precio_venta' => $producto->precio_venta,
+                    'stock_actual' => $producto->stock_actual,
+                    'categoria' => $producto->categoria->nombre ?? 'Sin categoría',
+                    'marca' => $producto->marca->nombre ?? 'Sin marca',
+                    'requiere_receta' => $producto->requiere_receta
+                ]
+            ]);
+            
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al buscar producto: ' . $e->getMessage()
             ], 500);
         }
     }
