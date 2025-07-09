@@ -1,6 +1,6 @@
 @extends('layouts.modern')
 
-@section('title', 'Estado de Resultados - PharmaSys Pro')
+@section('title', 'Estado de Resultados - Farmacia Magistral')
 
 @section('page-title', 'Contabilidad')
 

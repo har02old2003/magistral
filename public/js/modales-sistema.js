@@ -689,3 +689,70 @@ window.eliminarProducto = eliminarProducto;
 window.generarOrdenCompra = function() {
     Swal.fire('Funcionalidad en desarrollo', 'Pronto podrás generar órdenes de compra desde aquí.', 'info');
 }
+
+// ===============================
+// FUNCIONES DE CIERRE DE SESIÓN UNIVERSAL
+// ===============================
+
+window.mostrarModalCerrarSesion = function() {
+    // Busca el modal universal en el DOM
+    const modal = document.getElementById('modalCerrarSesion');
+    if (modal) {
+        const bsModal = new bootstrap.Modal(modal, {backdrop: 'static', keyboard: false});
+        bsModal.show();
+    } else {
+        alert('No se encontró el modal de cierre de sesión.');
+    }
+};
+
+window.ejecutarCerrarSesionUniversal = function() {
+    // Mostrar loading en el botón
+    const btnCerrar = document.querySelector('#modalCerrarSesion .btn-danger');
+    const btnCancelar = document.querySelector('#modalCerrarSesion .btn-outline-secondary');
+    const progress = document.getElementById('logout-progress');
+    const originalText = btnCerrar.innerHTML;
+    btnCerrar.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Cerrando sesión...';
+    btnCerrar.disabled = true;
+    if(btnCancelar) btnCancelar.disabled = true;
+    if(progress) progress.style.display = 'block';
+
+    // Buscar formulario de logout
+    const logoutForms = [
+        'logout-form',
+        'logout-form-dashboard',
+        'logout-form-usuarios',
+        'logout-form-ventas',
+        'logout-form-clientes',
+        'logout-form-categorias',
+        'logout-form-proveedores',
+        'logout-form-marcas',
+        'logout-form-productos'
+    ];
+    let formFound = false;
+    for (const formId of logoutForms) {
+        const form = document.getElementById(formId);
+        if (form) {
+            setTimeout(() => { form.submit(); }, 1000);
+            formFound = true;
+            break;
+        }
+    }
+    // Si no encuentra ningún formulario, crear uno dinámicamente
+    if (!formFound) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/logout';
+        form.style.display = 'none';
+        // Agregar token CSRF
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_token';
+            csrfInput.value = csrfToken.getAttribute('content');
+            form.appendChild(csrfInput);
+        }
+        document.body.appendChild(form);
+        setTimeout(() => { form.submit(); }, 1000);
+    }
+};

@@ -1,4 +1,4 @@
-@extends('layouts.modern')
+agrega@extends('layouts.modern')
 
 @section('title', 'Reporte Laboratorio - ' . $laboratorio->nombre_medicamento)
 

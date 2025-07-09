@@ -1,6 +1,6 @@
 @extends('layouts.modern')
 
-@section('title', 'Reportes - PharmaSys Pro')
+@section('title', 'Reportes - Farmacia Magistral')
 
 @section('header')
 <div class="d-flex justify-content-between align-items-center">
@@ -8,7 +8,7 @@
         <h1 class="mb-0">
             <i class="bi bi-graph-up me-3"></i>Centro de Reportes
         </h1>
-        <p class="text-muted mb-0">Análisis y reportes del sistema farmacéutico</p>
+        <p class="text-muted mb-0">Análisis y reportes del sistema Farmacia Magistral</p>
     </div>
     <div class="d-flex gap-2">
         <button class="btn btn-success btn-modern" onclick="reportePersonalizado()">

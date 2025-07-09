@@ -1,6 +1,6 @@
 @extends('layouts.modern')
 
-@section('title', 'Demo Modales CRUD - PharmaSys Pro')
+@section('title', 'Demo Modales CRUD - Farmacia Magistral')
 
 @section('content')
 <div class="container-fluid py-4">

@@ -1,6 +1,6 @@
 @extends('layouts.modern')
 
-@section('title', 'Guías de Remisión - PharmaSys Pro')
+@section('title', 'Guías de Remisión - Farmacia Magistral')
 
 @section('header')
 <div class="d-flex justify-content-between align-items-center">

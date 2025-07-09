@@ -157,7 +157,7 @@
                 <!-- Panel Izquierdo -->
                 <div class="col-lg-6 login-left">
                     <div>
-                        <i class="bi bi-hospital logo"></i>
+                        <img src="/logo-farmacia.png" alt="Farmacia Magistral" style="max-width: 90px; margin-bottom: 1rem;">
                         <h2 class="mb-3">Farmacia Magistral</h2>
                         <p class="mb-4">Sistema Integral de Gestión Farmacéutica</p>
                         
@@ -196,8 +196,9 @@
                 <div class="col-lg-6 login-right">
                     <div>
                         <div class="text-center mb-4">
-                            <h3 class="mb-2">¡Bienvenido de nuevo!</h3>
-                            <p class="text-muted">Ingresa tus credenciales para acceder al sistema</p>
+                            <img src="/logo-farmacia.png" alt="Farmacia Magistral" style="max-width: 70px; margin-bottom: 0.5rem;">
+                            <h3 class="mb-2">Farmacia Magistral</h3>
+                            <p class="text-muted">¡Bienvenido de nuevo! Ingresa tus credenciales para acceder al sistema</p>
                         </div>
                         
                         @if ($errors->any())

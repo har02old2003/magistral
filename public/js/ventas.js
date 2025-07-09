@@ -782,9 +782,6 @@ window.addEventListener('afterprint', function() {
         const modal = bootstrap.Modal.getInstance(modalEl) || bootstrap.Modal.getOrCreateInstance(modalEl);
         modal.hide();
     }
-    // Elimina backdrop si quedara alguno
-    const backdrop = document.querySelector('.modal-backdrop');
-    if (backdrop) backdrop.remove();
     // Quita clase modal-open del body si quedara
     document.body.classList.remove('modal-open');
     // Limpia el padding del body (Bootstrap lo pone para compensar el scroll)

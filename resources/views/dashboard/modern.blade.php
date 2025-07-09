@@ -204,7 +204,7 @@
                     <i class="bi bi-speedometer2 me-3"></i>
                     Dashboard Ejecutivo
                 </h1>
-                <p class="page-subtitle">Resumen completo del sistema farmacéutico</p>
+                <p class="page-subtitle">Resumen completo del sistema Farmacia Magistral</p>
             </div>
             <div class="col-md-6 text-end">
                 <div class="d-flex justify-content-end gap-2">

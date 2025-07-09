@@ -1,4 +1,4 @@
-{{-- Modales del Sistema CRUD - PharmaSys Pro --}}
+{{-- Modales del Sistema CRUD - Farmacia Magistral --}}
 
 {{-- MODAL VENTAS - CREAR --}}
 <div class="modal fade" id="modalVentasAgregar" tabindex="-1">
@@ -744,6 +744,41 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Universal de Cerrar Sesión -->
+<div class="modal fade" id="modalCerrarSesion" tabindex="-1" aria-labelledby="modalCerrarSesionLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 20px; border: none; overflow: hidden;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); color: white; border: none;">
+                <h5 class="modal-title fw-bold" id="modalCerrarSesionLabel">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Confirmar Cierre de Sesión
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="mb-4">
+                    <i class="bi bi-person-x text-danger" style="font-size: 4rem; opacity: 0.8;"></i>
+                </div>
+                <h6 class="mb-3">¿Está seguro de que desea cerrar sesión?</h6>
+                <p class="text-muted mb-4">
+                    Se cerrará su sesión actual y será redirigido al login.<br>
+                    <small><strong>Usuario:</strong> {{ auth()->user()->name ?? 'Usuario' }}</small>
+                </p>
+                <div class="progress mb-3" id="logout-progress" style="display: none; height: 8px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-danger" style="width: 100%"></div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-outline-secondary btn-lg px-4" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-danger btn-lg px-4 ms-3" onclick="ejecutarCerrarSesionUniversal()">
+                    <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
+                </button>
+            </div>
         </div>
     </div>
 </div>

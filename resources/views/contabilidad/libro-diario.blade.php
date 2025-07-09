@@ -1,6 +1,6 @@
 @extends('layouts.modern')
 
-@section('title', 'Libro Diario - PharmaSys Pro')
+@section('title', 'Libro Diario - Farmacia Magistral')
 
 @section('page-title', 'Contabilidad')
 

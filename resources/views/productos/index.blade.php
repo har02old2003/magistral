@@ -1,6 +1,6 @@
 @extends('layouts.modern')
 
-@section('title', 'Productos - PharmaSys Pro')
+@section('title', 'Productos - Farmacia Magistral')
 
 @section('header')
 <div class="d-flex justify-content-between align-items-center">
@@ -273,7 +273,7 @@
 
 <!-- Modal Nuevo Producto -->
 <div class="modal fade" id="nuevoProductoModal" tabindex="-1" aria-labelledby="nuevoProductoModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="nuevoProductoModalLabel">Nuevo Producto</h5>
@@ -355,6 +355,26 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
         <button type="button" class="btn btn-primary">Guardar Venta</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Productos Críticos -->
+<div class="modal fade" id="productosCriticosModal" tabindex="-1" aria-labelledby="productosCriticosModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title" id="productosCriticosModalLabel"><i class="bi bi-exclamation-triangle me-2"></i>Productos Críticos</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div id="productosCriticosBody">
+          <!-- Aquí se cargará la lista de productos críticos -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
       </div>
     </div>
   </div>
@@ -524,8 +544,46 @@
     }
     
     function mostrarProductosCriticos() {
-        document.getElementById('estadoFilter').value = 'stock-bajo';
-        // You might want to add a function to trigger the filter
+        // Obtener la lista de productos de la tabla
+        const filas = document.querySelectorAll('#productosTableBody tr');
+        let html = '';
+        let hayCriticos = false;
+        filas.forEach(fila => {
+            const stockTd = fila.querySelector('td:nth-child(4)');
+            const estadoTd = fila.querySelector('td:nth-child(6)');
+            if (stockTd && estadoTd) {
+                const stock = parseInt(stockTd.textContent);
+                const estado = estadoTd.textContent.trim().toLowerCase();
+                if (estado.includes('bajo') || estado.includes('agotado')) {
+                    html += '<tr>' + fila.innerHTML + '</tr>';
+                    hayCriticos = true;
+                }
+            }
+        });
+        if (!hayCriticos) {
+            html = '<tr><td colspan="7" class="text-center text-success">No hay productos críticos en este momento.</td></tr>';
+        }
+        document.getElementById('productosCriticosBody').innerHTML = `
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Código</th>
+                  <th>Producto</th>
+                  <th>Categoría</th>
+                  <th>Stock</th>
+                  <th>Precio</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>${html}</tbody>
+            </table>
+          </div>
+        `;
+        // Mostrar el modal usando solo Bootstrap 5
+        const modal = new bootstrap.Modal(document.getElementById('productosCriticosModal'));
+        modal.show();
     }
     
     function limpiarFiltros() {

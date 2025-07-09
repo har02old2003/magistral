@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'PharmaSys Pro - Sistema de Farmacia')</title>
+    <title>@yield('title', 'Farmacia Magistral')</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -746,8 +746,8 @@
             <a class="navbar-brand d-flex align-items-center text-decoration-none" href="{{ route('dashboard') }}">
                 <i class="bi bi-hospital me-2"></i>
                 <div>
-                    <div class="fw-bold">PharmaSys Pro</div>
-                    <small class="opacity-75">Sistema Farmacéutico</small>
+                    <div class="fw-bold">Farmacia Magistral</div>
+                    <small class="opacity-75">Farmacia Magistral</small>
                 </div>
             </a>
 
@@ -1009,7 +1009,7 @@
 
                 <!-- Logout -->
                 <div class="nav-section mt-4 pt-3" style="border-top: 1px solid rgba(255,255,255,0.1);">
-                    <a class="nav-link" href="#" onclick="logout()">
+                    <a class="nav-link" href="#" onclick="mostrarModalCerrarSesion()">
                         <i class="bi bi-box-arrow-right"></i>
                         Cerrar Sesión
                     </a>

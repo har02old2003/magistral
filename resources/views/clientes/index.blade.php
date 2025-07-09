@@ -1,6 +1,6 @@
 @extends('layouts.modern')
 
-@section('title', 'Gestión de Clientes - PharmaSys Pro')
+@section('title', 'Gestión de Clientes - Farmacia Magistral')
 
 @section('page_title')
 <div class="d-flex justify-content-between align-items-center">

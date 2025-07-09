@@ -1,6 +1,6 @@
 @extends('layouts.modern')
 
-@section('title', 'Venta Directa - PharmaSys Pro')
+@section('title', 'Venta Directa - Farmacia Magistral')
 
 @section('content')
 <div class="container py-4">

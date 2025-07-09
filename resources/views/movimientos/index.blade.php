@@ -1,6 +1,6 @@
 @extends('layouts.modern')
 
-@section('title', 'Ingresos/Transferencias - PharmaSys Pro')
+@section('title', 'Ingresos/Transferencias - Farmacia Magistral')
 
 @section('header')
 <div class="d-flex justify-content-between align-items-center">

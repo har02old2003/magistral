@@ -1,6 +1,6 @@
 @extends('layouts.modern')
 
-@section('title', 'Proveedores - PharmaSys Pro')
+@section('title', 'Proveedores - Farmacia Magistral')
 
 @section('page-title', 'Proveedores')
 
