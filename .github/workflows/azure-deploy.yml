@@ -50,6 +50,6 @@ jobs:
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
-        app-name: 'farmacia-magistral-app'  # Reemplaza con tu nombre real de App Service
+        app-name: 'farmacia-sistema-2025'  # Nombre del nuevo App Service
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
         package: ${{ github.sha }}.tar.gz 
