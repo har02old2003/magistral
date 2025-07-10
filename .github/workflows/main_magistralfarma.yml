@@ -70,22 +70,15 @@ jobs:
           app-name: 'magistralfarma'
           slot-name: 'Production'
           package: .
-          # Eliminamos el startup-command de aquí, ya que no es el lugar correcto para los comandos Artisan.
-          # startup-command: |
-          #   php artisan optimize:clear
-          #   php artisan migrate --force
-          #   php artisan storage:link
-          #   php artisan config:cache
-          #   php artisan route:cache
-          #   php artisan view:cache
-          #   # php artisan db:seed # Descomenta si necesitas ejecutar seeders
 
       # --- NUEVO PASO AÑADIDO PARA EJECUTAR COMANDOS LARAVEL VIA AZURE CLI ---
       - name: Run Laravel Post-Deployment Commands via Azure CLI
         uses: azure/cli@v2
         with:
           inlineScript: |
-            az webapp ssh run --resource-group "databaseywebsite" --name "magistralfarma" --web-app-path "/home/site/wwwroot" --command "php artisan optimize:clear && php artisan migrate --force && php artisan storage:link && php artisan config:cache && php artisan route:cache && php artisan view:cache"
+            # Navegamos al directorio wwwroot y luego ejecutamos los comandos
+            az webapp ssh run --resource-group "databaseywebsite" --name "magistralfarma" --command "cd /home/site/wwwroot && php artisan optimize:clear && php artisan migrate --force && php artisan storage:link && php artisan config:cache && php artisan route:cache && php artisan view:cache"
             # Si necesitas ejecutar seeders, descomenta la siguiente línea:
             # az webapp ssh run --resource-group "databaseywebsite" --name "magistralfarma" --web-app-path "/home/site/wwwroot" --command "php artisan db:seed"
+
 
