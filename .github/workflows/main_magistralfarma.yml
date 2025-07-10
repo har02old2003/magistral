@@ -9,9 +9,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read #This is required for actions/checkout
-
     steps:
       - uses: actions/checkout@v4
 
@@ -20,18 +17,20 @@ jobs:
         with:
           php-version: '8.2'
 
-      - name: Check if composer.json exists
-        id: check_files
-        uses: andstor/file-existence-action@v1
-        with:
-          files: 'composer.json'
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
 
-      - name: Run composer install if composer.json exists
-        if: steps.check_files.outputs.files_exists == 'true'
-        run: composer validate --no-check-publish && composer install --prefer-dist --no-progress
+      - name: Limpiar cachés y optimizar Laravel
+        run: |
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+          php artisan storage:link || true
+          chmod -R 775 storage bootstrap/cache
 
       - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
+        run: |
+          zip -r release.zip . -x "*.git*" "*node_modules*" "*.github*" "tests*" "test-azure-connection.php" "test-simple.php"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -42,11 +41,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    
-    permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
-
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
@@ -55,13 +49,13 @@ jobs:
 
       - name: Unzip artifact for deployment
         run: unzip release.zip
-        
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_75670E573F054746B7A89CE8791ED52B }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_C382058224A2481D87822E781558A335 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C1E264457D5242F2B5FA4A43CFF5FABB }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_64B86074F9F048679E0D93FFEFA7E214 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_C17490A7C258455FAE3889FC8EF56E5A }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C9DC44F8B9D04BFC8533133CC429B8F5 }}
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
@@ -70,6 +64,3 @@ jobs:
           app-name: 'magistralfarma'
           slot-name: 'Production'
           package: .
-
-      # El paso para ejecutar comandos Laravel vía Azure CLI ha sido eliminado.
-      # Ahora, los comandos se ejecutarán mediante un script .deployment en el App Service.
