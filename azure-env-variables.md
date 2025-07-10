@@ -7,7 +7,7 @@ APP_NAME=Farmacia Magistral
 APP_ENV=production
 APP_KEY=base64:qj/2hzq1qS0kaoeCC6ZSNplk9oD2Bhki04Cg/UfWR1o=
 APP_DEBUG=false
-APP_URL=https://farmacia-sistema-2025.azurewebsites.net
+APP_URL=https://magistralfarmacia.azurewebsites.net
 
 LOG_CHANNEL=stack
 LOG_LEVEL=error
