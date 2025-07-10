@@ -11,7 +11,7 @@ class Conectar {
             // TODO: Cadena de Conexión para Azure MySQL
             $host = $_ENV['DB_HOST'] ?? 'databasefarma.mysql.database.azure.com';
             $port = $_ENV['DB_PORT'] ?? '3306';
-            $database = $_ENV['DB_DATABASE'] ?? 'farmacia_magistral';
+            $database = $_ENV['DB_DATABASE'] ?? 'mysampledb';
             $username = $_ENV['DB_USERNAME'] ?? 'administrador';
             $password = $_ENV['DB_PASSWORD'] ?? '';
             
@@ -19,7 +19,7 @@ class Conectar {
             $options = [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::MYSQL_ATTR_SSL_CA => null, // Azure requiere SSL
+                PDO::MYSQL_ATTR_SSL_CA => false, // Azure requiere SSL
                 PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false
             ];
             
