@@ -1,3 +1,6 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
 name: Build and deploy PHP app to Azure Web App - magistralfarma
 
 on:
@@ -55,13 +58,13 @@ jobs:
 
       - name: Unzip artifact for deployment
         run: unzip release.zip
-        
+      
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_75670E573F054746B7A89CE8791ED52B }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_C382058224A2481D87822E781558A335 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C1E264457D5242F2B5FA4A43CFF5FABB }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_64B86074F9F048679E0D93FFEFA7E214 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_C17490A7C258455FAE3889FC8EF56E5A }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C9DC44F8B9D04BFC8533133CC429B8F5 }}
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
@@ -70,6 +73,4 @@ jobs:
           app-name: 'magistralfarma'
           slot-name: 'Production'
           package: .
-
-      # El paso para ejecutar comandos Laravel vía Azure CLI ha sido eliminado.
-      # Ahora, los comandos se ejecutarán mediante un script .deployment en el App Service.
+          
