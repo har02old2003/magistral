@@ -248,3 +248,4 @@ Para soporte técnico o consultas sobre el sistema, contactar al equipo de desar
 **Desarrollado con ❤️ para Farmacia Magistral**
 *Sistema de Gestión Farmacéutica - Laravel Framework*
  
+ 
