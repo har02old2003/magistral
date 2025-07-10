@@ -6,6 +6,10 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -24,8 +28,12 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
 
-      - name: Crear carpeta de vistas compiladas si no existe
-        run: mkdir -p storage/framework/views
+      - name: Crear carpetas necesarias de Laravel
+        run: |
+          mkdir -p storage/framework/views
+          mkdir -p storage/framework/cache
+          mkdir -p storage/framework/sessions
+          mkdir -p storage/logs
 
       - name: Limpiar cachés y optimizar Laravel
         run: |
