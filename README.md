@@ -249,3 +249,4 @@ Para soporte técnico o consultas sobre el sistema, contactar al equipo de desar
 *Sistema de Gestión Farmacéutica - Laravel Framework*
  
  
+ 
