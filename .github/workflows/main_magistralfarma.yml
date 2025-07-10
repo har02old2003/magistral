@@ -1,6 +1,3 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
 name: Build and deploy PHP app to Azure Web App - magistralfarma
 
 on:
@@ -58,7 +55,7 @@ jobs:
 
       - name: Unzip artifact for deployment
         run: unzip release.zip
-      
+        
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -73,4 +70,22 @@ jobs:
           app-name: 'magistralfarma'
           slot-name: 'Production'
           package: .
-          
+
+      # --- NUEVOS PASOS AÑADIDOS PARA LARAVEL ---
+      - name: Run Laravel Post-Deployment Commands
+        uses: azure/webapps-deploy@v3 # Reutilizamos la acción de despliegue para ejecutar comandos
+        with:
+          app-name: 'magistralfarma'
+          slot-name: 'Production'
+          # El siguiente comando ejecuta Artisan a través de SSH en el App Service
+          # Asegúrate de que tus variables de entorno de DB estén en Azure App Service
+          # y no en el .env del código.
+          # Los comandos se ejecutarán en el directorio /home/site/wwwroot
+          startup-command: |
+            php artisan optimize:clear
+            php artisan migrate --force
+            php artisan storage:link
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            # php artisan db:seed # Descomenta si necesitas ejecutar seeders
