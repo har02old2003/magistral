@@ -24,6 +24,9 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
 
+      - name: Crear carpeta de vistas compiladas si no existe
+        run: mkdir -p storage/framework/views
+
       - name: Limpiar cachés y optimizar Laravel
         run: |
           php artisan config:cache
