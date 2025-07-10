@@ -17,6 +17,10 @@ jobs:
         with:
           php-version: '8.2'
 
+      - name: Copiar .env.example a .env si no existe
+        run: |
+          if [ ! -f .env ]; then cp .env.example .env; fi
+
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
 
