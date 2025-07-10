@@ -71,13 +71,20 @@ jobs:
           slot-name: 'Production'
           package: .
 
-      # --- PASO CORREGIDO PARA EJECUTAR COMANDOS LARAVEL VIA AZURE CLI (Versión 4) ---
+      # --- PASO CORREGIDO PARA EJECUTAR COMANDOS LARAVEL VIA AZURE CLI (Versión 5 - Comandos Individuales) ---
       - name: Run Laravel Post-Deployment Commands via Azure CLI
         uses: azure/cli@v2
         with:
           inlineScript: |
-            # Envolvemos el comando en 'bash -c' para asegurar que se ejecute correctamente.
-            # Asegúrate de que el grupo de recursos y el nombre de la aplicación sean correctos.
-            az webapp ssh run --resource-group "databaseywebsite" --name "magistralfarma" --command "bash -c 'cd /home/site/wwwroot && php artisan optimize:clear && php artisan migrate --force && php artisan storage:link && php artisan config:cache && php artisan route:cache && php artisan view:cache'"
+            # Navegamos al directorio una vez y luego ejecutamos cada comando Artisan individualmente.
+            # Esto es más robusto para evitar problemas de parsing de comandos complejos.
+            az webapp ssh run --resource-group "databaseywebsite" --name "magistralfarma" --command "cd /home/site/wwwroot"
+            az webapp ssh run --resource-group "databaseywebsite" --name "magistralfarma" --command "php artisan optimize:clear"
+            az webapp ssh run --resource-group "databaseywebsite" --name "magistralfarma" --command "php artisan migrate --force"
+            az webapp ssh run --resource-group "databaseywebsite" --name "magistralfarma" --command "php artisan storage:link"
+            az webapp ssh run --resource-group "databaseywebsite" --name "magistralfarma" --command "php artisan config:cache"
+            az webapp ssh run --resource-group "databaseywebsite" --name "magistralfarma" --command "php artisan route:cache"
+            az webapp ssh run --resource-group "databaseywebsite" --name "magistralfarma" --command "php artisan view:cache"
             # Si necesitas ejecutar seeders, descomenta la siguiente línea:
-            # az webapp ssh run --resource-group "databaseywebsite" --name "magistralfarma" --command "bash -c 'cd /home/site/wwwroot && php artisan db:seed'"
+            # az webapp ssh run --resource-group "databaseywebsite" --name "magistralfarma" --command "php artisan db:seed"
+
