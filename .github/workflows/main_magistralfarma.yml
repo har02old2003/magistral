@@ -70,22 +70,22 @@ jobs:
           app-name: 'magistralfarma'
           slot-name: 'Production'
           package: .
+          # Eliminamos el startup-command de aquí, ya que no es el lugar correcto para los comandos Artisan.
+          # startup-command: |
+          #   php artisan optimize:clear
+          #   php artisan migrate --force
+          #   php artisan storage:link
+          #   php artisan config:cache
+          #   php artisan route:cache
+          #   php artisan view:cache
+          #   # php artisan db:seed # Descomenta si necesitas ejecutar seeders
 
-      # --- NUEVOS PASOS AÑADIDOS PARA LARAVEL ---
-      - name: Run Laravel Post-Deployment Commands
-        uses: azure/webapps-deploy@v3 # Reutilizamos la acción de despliegue para ejecutar comandos
+      # --- NUEVO PASO AÑADIDO PARA EJECUTAR COMANDOS LARAVEL VIA AZURE CLI ---
+      - name: Run Laravel Post-Deployment Commands via Azure CLI
+        uses: azure/cli@v2
         with:
-          app-name: 'magistralfarma'
-          slot-name: 'Production'
-          # El siguiente comando ejecuta Artisan a través de SSH en el App Service
-          # Asegúrate de que tus variables de entorno de DB estén en Azure App Service
-          # y no en el .env del código.
-          # Los comandos se ejecutarán en el directorio /home/site/wwwroot
-          startup-command: |
-            php artisan optimize:clear
-            php artisan migrate --force
-            php artisan storage:link
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
-            # php artisan db:seed # Descomenta si necesitas ejecutar seeders
+          inlineScript: |
+            az webapp ssh run --resource-group "databaseywebsite" --name "magistralfarma" --web-app-path "/home/site/wwwroot" --command "php artisan optimize:clear && php artisan migrate --force && php artisan storage:link && php artisan config:cache && php artisan route:cache && php artisan view:cache"
+            # Si necesitas ejecutar seeders, descomenta la siguiente línea:
+            # az webapp ssh run --resource-group "databaseywebsite" --name "magistralfarma" --web-app-path "/home/site/wwwroot" --command "php artisan db:seed"
+
