@@ -1,7 +1,5 @@
 <?php
 
-session_start();
-
 /* TODO: Inicio de Session */
 class Conectar {
     protected $dbh;
